@@ -18,6 +18,7 @@
     --muted: #8b98a8; --green: #2ecc71; --red: #ff5c5c; --blue: #4da3ff; --amber: #f5b942;
   }
   * { box-sizing: border-box; }
+  button { touch-action: manipulation; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-text-size-adjust: 100%; }
@@ -45,7 +46,8 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
   .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .sym { font-size: 18px; font-weight: 700; }
-  .tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-left: 6px; vertical-align: 2px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-left: 6px; vertical-align: 2px;
+    white-space: nowrap; display: inline-block; }
   .tag.open { background: rgba(77,163,255,.15); color: var(--blue); }
   .tag.win { background: rgba(46,204,113,.15); color: var(--green); }
   .tag.loss { background: rgba(255,92,92,.15); color: var(--red); }
@@ -117,6 +119,48 @@
     border-radius: 10px; padding: 9px 10px; font-size: 16px; text-transform: uppercase; }
   .addrow button { background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 0 16px; font-weight: 700; font-size: 15px; }
   .x { background: none; border: 0; color: var(--muted); font-size: 15px; padding: 2px 4px; cursor: pointer; flex: none; }
+  /* options watch + quick trades */
+  .ow + .ow { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+  .st { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  .st.call { background: rgba(46,204,113,.15); color: var(--green); }
+  .st.put { background: rgba(255,92,92,.15); color: var(--red); }
+  .st.wait { background: var(--card2); color: var(--muted); }
+  .st.late { background: rgba(245,185,66,.14); color: var(--amber); }
+  .mtr { position: relative; height: 8px; margin: 14px 2px 6px; border-radius: 4px; background: var(--card2); }
+  .mtr span { position: absolute; top: 0; bottom: 0; }
+  .mtr i { position: absolute; top: -5px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--card); box-sizing: border-box; }
+  .mlab { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .mlab b { font-weight: 700; }
+  .qt { display: flex; gap: 8px; margin-top: 10px; }
+  .qb { flex: 1; border: 0; border-radius: 10px; padding: 11px 0; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .qb.call { background: rgba(46,204,113,.16); color: var(--green); }
+  .qb.put { background: rgba(255,92,92,.16); color: var(--red); }
+  .qb.hold { background: rgba(77,163,255,.16); color: var(--blue); }
+  .qb:disabled { opacity: .4; }
+  .tmr { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .tmr .chip { padding: 4px 10px; }
+  .sellbtn { margin-top: 10px; width: 100%; border: 1px solid rgba(255,92,92,.5); background: rgba(255,92,92,.1); color: var(--red);
+    border-radius: 10px; padding: 9px; font-size: 14px; font-weight: 800; cursor: pointer; }
+  .sellbtn.armed { background: var(--red); color: #fff; }
+  .cd { font-size: 13px; font-weight: 700; color: var(--amber); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .tag.you { background: rgba(245,185,66,.15); color: var(--amber); }
+  .tag.swing { background: rgba(77,163,255,.15); color: var(--blue); }
+  .step { display: flex; align-items: center; gap: 10px; }
+  .step button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2);
+    color: var(--text); font-size: 20px; font-weight: 700; cursor: pointer; }
+  .step b { min-width: 24px; text-align: center; font-size: 18px; }
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 8; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; max-width: 560px; margin: 0 auto;
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px 18px 0 0;
+    padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); }
+  .sheet .big { font-size: 19px; }
+  .sheet .kv { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .sheet .kv:last-of-type { border-bottom: 0; }
+  .sheet .btns { display: flex; gap: 10px; margin-top: 16px; }
+  .sheet .btns .btn { margin-top: 0; }
+  .btn.green { background: var(--green); color: #06210f; }
+  .btn.red { background: var(--red); }
 </style>
 </head>
 <body>
@@ -130,7 +174,7 @@
 "use strict";
 // ---------------- config ----------------
 const TZ = "America/Chicago";                      // times are shown in Central
-const API = "https://paper-api.alpaca.markets";    // paper only, read-only app
+const API = "https://paper-api.alpaca.markets";    // paper only: this app can never touch real money
 const DATA = "https://data.alpaca.markets";
 const TRADE_WS = "wss://paper-api.alpaca.markets/stream";
 const DATA_WS = "wss://stream.data.alpaca.markets/v2/iex";
@@ -139,6 +183,14 @@ const MY_STORE = "paperbot_mylist";
 const INDEXES = [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["DIA", "Dow"], ["IWM", "Russell 2000"]];
 // Same 50 stocks the bot scans (bot.py WATCHLIST)
 const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "AFRM", "T", "VZ", "CMCSA", "WBD", "NKE", "DKNG", "PFE", "INTC", "CSCO", "MRVL", "SMCI", "UBER", "SNAP", "JD", "SOUN", "IONQ", "RGTI", "F", "GM", "RIVN", "LCID", "NIO", "AAL", "DAL", "UAL", "CCL", "RKLB", "ACHR", "JOBY", "OXY", "DVN", "FCX", "NEM", "MARA", "RIOT", "CLSK", "IREN", "XLF", "SLV", "GDX", "IBIT"];
+// Same rules as bot.py, so the app and the bot agree
+const OPT_UNDERLYINGS = ["SPY", "QQQ"];
+const OPT_CHASE_PCT = 0.3;          // bot won't buy once SPY/QQQ is this far past its range
+const OPT_BUDGET_PCT = 20;          // one contract, at most 20% of the account (~$100)
+const SWING_BUDGET = 150;           // most in swing holds at once (the bot's and yours)
+const SWING_STOP_PCT = 7;           // protective stop under your swing buys
+const TIMERS = [[5, "5s"], [30, "30s"], [60, "1m"], [300, "5m"], [0, "Off"]];
+const MT_STORE = "paperbot_mt";
 
 // ---------------- state ----------------
 let keys = loadKeys();
@@ -148,7 +200,12 @@ const S = {
   tradeWs: "off", dataWs: "off", lastUpdate: null, error: null, showSettings: false, loading: false,
   tab: loadPref("paperbot_tab", "bot"), snaps: {}, mkBars: {}, mkFetched: {}, mkUpdate: null, mkError: null,
   mkLoading: false, sortBy: loadPref("paperbot_sort", "up"), expanded: null, myList: loadMyList(),
+  timer: Number(loadPref("paperbot_timer", "30")), sheet: null, qtBusy: null, mt: loadMt(), optQ: {},
+  armSell: null, swingBook: {}, swingSig: null, holdQty: 1,
 };
+function loadMt() { try { const m = JSON.parse(localStorage.getItem(MT_STORE) || "null"); return m && m.sym ? m : null; } catch (e) { return null; } }
+function saveMt() { try { S.mt ? localStorage.setItem(MT_STORE, JSON.stringify(S.mt)) : localStorage.removeItem(MT_STORE); } catch (e) {} }
+function clearMt() { S.mt = null; saveMt(); }
 
 function loadKeys() {
   try { const k = JSON.parse(localStorage.getItem(KEY_STORE) || "null"); return k && k.key && k.secret ? k : null; }
@@ -218,6 +275,18 @@ async function api(path, base = API) {
   if (!r.ok) throw new Error(`Alpaca error ${r.status}: ${(await r.text()).slice(0, 140)}`);
   return r.json();
 }
+// Orders and sells. Always the paper API, never anything else.
+async function apiSend(method, path, body) {
+  let r;
+  const headers = { "APCA-API-KEY-ID": keys.key, "APCA-API-SECRET-KEY": keys.secret };
+  if (body) headers["Content-Type"] = "application/json";
+  try { r = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { const err = new Error("Can't reach Alpaca. Check your connection."); err.network = true; throw err; }
+  const text = await r.text();
+  let j = null; try { j = text ? JSON.parse(text) : null; } catch (e) {}
+  if (!r.ok) { const err = new Error((j && j.message) || `Alpaca error ${r.status}`); err.status = r.status; throw err; }
+  return j;
+}
 
 // ---------------- loading ----------------
 async function loadAll() {
@@ -234,6 +303,7 @@ async function loadAll() {
       api("/v2/account/portfolio/history?period=1D&timeframe=5Min").catch(() => null),
     ]);
     Object.assign(S, { account, clock, positions, orders, fills, history, error: null, lastUpdate: Date.now() });
+    await loadSwingBook().catch(() => {});
     const today = etDate(clock.timestamp);
     const days = [...new Set(fills.map((f) => etDate(f.transaction_time)))];
     if (clock.is_open || !days.length || positions.length) days.push(today);
@@ -251,6 +321,44 @@ async function loadAll() {
     syncStreams();
   }
 }
+
+// Which stocks are swing holds, from how they were bought ("swing-" = bot, "app-swing-" = you)
+async function loadSwingBook() {
+  const stocks = S.positions.filter((p) => !isOption(p.symbol));
+  const sig = stocks.map((p) => p.symbol + ":" + p.qty).sort().join(",");
+  if (sig === S.swingSig) return;
+  const book = {};
+  if (stocks.length) {
+    const after = new Date(Date.now() - 60 * 864e5).toISOString();
+    const orders = await api(`/v2/orders?status=all&symbols=${stocks.map((p) => encodeURIComponent(p.symbol)).join(",")}` +
+      `&after=${encodeURIComponent(after)}&limit=500&direction=desc&nested=true`);
+    for (const p of stocks) {
+      const buys = orders.filter((o) => o.symbol === p.symbol && o.side === "buy" && o.filled_at)
+        .sort((a, b) => b.filled_at.localeCompare(a.filled_at));
+      const o = buys[0], tag = (o && o.client_order_id) || "";
+      if (tag.startsWith("app-swing-")) book[p.symbol] = { who: "you", at: o.filled_at, legs: o.legs || [] };
+      else if (tag.startsWith("swing-")) book[p.symbol] = { who: "bot", at: o.filled_at, legs: o.legs || [] };
+    }
+  }
+  S.swingBook = book; S.swingSig = sig;
+}
+const isSwing = (sym) => !!S.swingBook[sym];
+function swingInUse() {
+  return S.positions.filter((p) => isSwing(p.symbol)).reduce((s, p) => s + num(p.qty) * num(p.current_price), 0);
+}
+// Trading days held: weekdays after the buy day, up to today
+function daysHeld(iso) {
+  let n = 0;
+  const d = new Date(etInstant(etDate(iso), 12, 0)), end = etDate(Date.now());
+  for (let i = 0; i < 60; i++) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (etDate(d) > end) break;
+    const wd = zoneParts(d, "America/New_York").weekday;
+    if (wd !== "Sat" && wd !== "Sun") n++;
+  }
+  return n;
+}
+const boughtInApp = (sym) => S.orders.some((o) => o.symbol === sym && o.side === "buy" && (o.client_order_id || "").startsWith("app-"));
 
 function symbolsForDay(day) {
   const set = new Set(tripsFor(day).map((t) => t.symbol));
@@ -464,11 +572,18 @@ function sparkline(hist) {
 }
 
 // ---------------- rendering ----------------
-let renderQueued = false;
+let renderQueued = false, pointerDown = false;
+// Don't redraw under a finger mid-tap, or the tap can get lost (the screen redraws every second during a trade)
+document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+for (const ev of ["pointerup", "pointercancel"]) document.addEventListener(ev, () => { pointerDown = false; }, true);
 function render() {
   if (renderQueued) return;
   renderQueued = true;
-  requestAnimationFrame(() => { renderQueued = false; draw(); });
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    if (pointerDown) { setTimeout(render, 100); return; }
+    draw();
+  });
 }
 
 function statusPill() {
@@ -495,6 +610,7 @@ function draw() {
     if (S.showSettings) h += settingsView();
     if (S.error && S.tab === "bot") h += `<div class="banner err">${esc(S.error)}</div>`;
     h += S.tab === "market" ? marketView() : botView();
+    if (S.sheet) h += sheetView();
     app.innerHTML = h;
   }
   if (keep) {
@@ -514,25 +630,20 @@ function botView() {
     sparkline(S.history) +
     `<div class="meta">Updated ${S.lastUpdate ? clockTime(S.lastUpdate) : "—"} · times in Central</div></div>`;
 
-  // open positions
+  // open positions (day trades and same-day options; swing holds get their own list)
   const today = etDate(Date.now());
   const tripsToday = tripsFor(today);
-  h += `<h2>Open positions (${S.positions.length})</h2>`;
-  if (!S.positions.length) {
-    h += `<div class="card empty">No open positions. The bot looks for trades from 9:00 to 11:30 AM.</div>`;
+  const dayPos = S.positions.filter((p) => !isSwing(p.symbol));
+  const swingPos = S.positions.filter((p) => isSwing(p.symbol));
+  h += `<h2>Open positions (${dayPos.length})</h2>`;
+  if (!dayPos.length) {
+    h += `<div class="card empty">No open day trades. The bot looks for trades from 9:00 to 11:30 AM.</div>`;
   }
-  for (const p of S.positions) {
+  for (const p of dayPos) {
     const t = tripsToday.find((x) => x.symbol === p.symbol) || {};
     const qty = num(p.qty), entry = num(p.avg_entry_price), now = num(p.current_price);
     const upl = (now - entry) * qty * mult(p.symbol), uplPct = entry ? ((now - entry) / entry) * 100 : 0;
-    if (isOption(p.symbol)) {
-      h += `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(p.symbol))}</span><span class="tag open">SAME-DAY</span></div>` +
-        `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
-        `<div class="row sub"><div>${qty} contract${qty === 1 ? "" : "s"} @ ${entry.toFixed(2)} \u2192 <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
-        `<div class="levels"><span>Sells at <b style="color:var(--green)">+60%</b> (${(entry * 1.6).toFixed(2)})</span>` +
-        `<span><b style="color:var(--red)">\u221240%</b> (${(entry * 0.6).toFixed(2)})</span><span>or after <b>20 min</b></span></div></div>`;
-      continue;
-    }
+    if (isOption(p.symbol)) { h += optionCard(p); continue; }
     h += `<div class="card"><div class="row"><div><span class="sym">${esc(p.symbol)}</span><span class="tag open">OPEN</span></div>` +
       `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
       `<div class="row sub"><div>${qty} sh @ ${entry.toFixed(2)} → <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
@@ -543,6 +654,15 @@ function botView() {
         lines: [{ price: t.target, color: "#2ecc71" }, { price: entry, color: "#4da3ff" }, { price: t.stop, color: "#ff5c5c" }],
         markers: (t.buys || []).map((f) => ({ t: f.transaction_time, price: num(f.price), side: "buy" })) })}</div></div>`;
   }
+
+  // swing holds (kept overnight)
+  const used = swingInUse();
+  h += `<h2>Swing holds (${swingPos.length})</h2>`;
+  h += `<div class="sub" style="margin:-2px 2px 8px">${money(used)} of ${money(SWING_BUDGET)} swing money in use</div>`;
+  if (!swingPos.length) {
+    h += `<div class="card empty">Nothing held overnight. The bot looks for pullbacks in uptrending stocks from 9:00 AM, and you can buy to hold from any stock's chart on the Market tab.</div>`;
+  }
+  for (const p of swingPos) h += swingCard(p);
 
   // trades by day
   h += `<h2>Trades</h2><div class="chips">` +
@@ -558,7 +678,7 @@ function botView() {
   for (const t of trips) {
     const tag = t.open ? "open" : t.pnl > 0.0049 ? "win" : t.pnl < -0.0049 ? "loss" : "flat";
     if (isOption(t.symbol)) {
-      h += `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(t.symbol))}</span><span class="tag ${tag}">SAME-DAY</span></div>` +
+      h += `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(t.symbol))}</span><span class="tag ${tag}">SAME-DAY</span>${boughtInApp(t.symbol) ? `<span class="tag you">YOURS</span>` : ""}</div>` +
         `<div class="big ${cls(t.pnl)}">${t.open ? "\u2014" : signed(t.pnl)}</div></div>` +
         `<div class="row sub"><div>${t.bq} contract${t.bq === 1 ? "" : "s"} \u00b7 in ${t.avgBuy.toFixed(2)} \u00b7 out ${isFinite(t.avgSell) ? t.avgSell.toFixed(2) : "\u2014"}</div>` +
         `<div>${clockTime(t.first)}\u2013${clockTime(t.last)}</div></div></div>`;
@@ -582,8 +702,62 @@ function botView() {
       `<span><b>${esc(nameOf(f.symbol))}</b> ${num(f.qty)} @ ${num(f.price).toFixed(2)}</span><span class="time">${clockTime(f.transaction_time)}</span></div>`).join("") + `</div>`;
   }
   if (S.chartsBroken) h += `<div class="banner">Price charts couldn't load from Alpaca's data feed. Trades and P&L still update.</div>`;
-  h += `<div class="note" style="text-align:center;margin-top:18px">Read-only view of your Alpaca paper account.</div>`;
+  h += `<div class="note" style="text-align:center;margin-top:18px">Your Alpaca paper account (practice money). Trade options or buy to hold from the Market tab.</div>`;
   return h;
+}
+
+function sellButton(sym, label) {
+  const armed = S.armSell && S.armSell.sym === sym && Date.now() < S.armSell.until;
+  return `<button class="sellbtn ${armed ? "armed" : ""}" data-act="sell" data-sym="${esc(sym)}">${armed ? "Tap again to sell" : esc(label)}</button>`;
+}
+
+function mtLine(sym) {
+  const m = S.mt;
+  if (!m || m.sym !== sym) return "";
+  if (m.state === "pending") return `<div class="cd">Buying…</div>`;
+  if (m.sellAt) {
+    const s = Math.max(0, Math.ceil((m.sellAt - Date.now()) / 1000));
+    return `<div class="cd">Auto-sell in ${s >= 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : s + "s"}</div>`;
+  }
+  return `<div class="cd" style="color:var(--muted)">No timer · sell when you want</div>`;
+}
+
+// A same-day option you or the bot hold
+function optionCard(p) {
+  const qty = num(p.qty), entry = num(p.avg_entry_price);
+  const q = S.optQ[p.symbol];
+  const bid = q && Date.now() - q.at < 15000 && num(q.bp) > 0 ? num(q.bp) : NaN;
+  const now = isFinite(bid) ? bid : num(p.current_price);
+  const upl = (now - entry) * qty * 100, uplPct = entry ? ((now - entry) / entry) * 100 : 0;
+  const mine = boughtInApp(p.symbol);
+  return `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(p.symbol))}</span><span class="tag open">SAME-DAY</span>${mine ? `<span class="tag you">YOURS</span>` : ""}</div>` +
+    `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
+    `<div class="row sub"><div>${qty} contract${qty === 1 ? "" : "s"} @ ${entry.toFixed(2)} → <b style="color:var(--text)">${now.toFixed(2)}</b>${isFinite(bid) ? " if sold now" : ""}</div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
+    mtLine(p.symbol) +
+    `<div class="levels"><span>Bot sells at <b style="color:var(--green)">+60%</b> (${(entry * 1.6).toFixed(2)})</span>` +
+    `<span><b style="color:var(--red)">−40%</b> (${(entry * 0.6).toFixed(2)})</span><span>or <b>20 min</b></span></div>` +
+    sellButton(p.symbol, "Sell now") + `</div>`;
+}
+
+// A stock held overnight (the bot's or yours)
+function swingCard(p) {
+  const b = S.swingBook[p.symbol] || {};
+  const qty = num(p.qty), entry = num(p.avg_entry_price), now = num(p.current_price);
+  const upl = (now - entry) * qty, uplPct = entry ? ((now - entry) / entry) * 100 : 0;
+  const stopLeg = (b.legs || []).find((l) => (l.type === "stop" || l.type === "stop_limit") && !["canceled", "filled", "expired"].includes(l.status));
+  const tpLeg = (b.legs || []).find((l) => l.type === "limit" && !["canceled", "filled", "expired"].includes(l.status));
+  const day = num(p.change_today);
+  const held = b.at ? daysHeld(b.at) : 0;
+  return `<div class="card"><div class="row"><div><span class="sym">${esc(p.symbol)}</span><span class="tag swing">SWING</span>` +
+    `<span class="tag ${b.who === "you" ? "you" : "open"}">${b.who === "you" ? "YOURS" : "BOT"}</span></div>` +
+    `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
+    `<div class="row sub"><div>${qty} sh @ ${entry.toFixed(2)} → <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
+    `<div class="levels"><span>Held <b>${held === 0 ? "since today" : held + (held === 1 ? " day" : " days")}</b></span>` +
+    (isFinite(day) ? `<span>Today <b class="${cls(day)}">${pct(day * 100)}</b></span>` : "") +
+    (stopLeg ? `<span>Stop <b style="color:var(--red)">${num(stopLeg.stop_price).toFixed(2)}</b></span>` : "") +
+    (tpLeg ? `<span>Target <b style="color:var(--green)">${num(tpLeg.limit_price).toFixed(2)}</b></span>` : "") + `</div>` +
+    (b.who === "bot" ? `<div class="note" style="margin-top:6px">The bot sells it at its stop or target, if its uptrend breaks, or after 10 trading days.</div>` : "") +
+    sellButton(p.symbol, b.who === "you" ? "Sell" : "Sell now (instead of the bot)") + `</div>`;
 }
 
 
@@ -621,8 +795,117 @@ function quoteRow(sym, removable) {
     h += `<div class="qx">${chart({ symbol: sym, day, bars: (S.mkBars[day] || {})[sym] || [], lines: [{ price: q.prev, color: "#8b98a8" }] })}` +
       `<div class="levels"><span>Open <b>${isFinite(q.open) ? q.open.toFixed(2) : "\u2014"}</b></span>` +
       `<span>High <b>${isFinite(q.hi) ? q.hi.toFixed(2) : "\u2014"}</b></span><span>Low <b>${isFinite(q.lo) ? q.lo.toFixed(2) : "\u2014"}</b></span>` +
-      `<span>Prev close <b>${isFinite(q.prev) ? q.prev.toFixed(2) : "\u2014"}</b></span></div></div>`;
+      `<span>Prev close <b>${isFinite(q.prev) ? q.prev.toFixed(2) : "\u2014"}</b></span></div>` + holdRow(sym, q) + `</div>`;
   }
+  return h;
+}
+
+// ---------------- buy to hold (swing) ----------------
+function holdLimits(price) {
+  const left = Math.max(0, SWING_BUDGET - swingInUse());
+  const power = num(S.account && S.account.buying_power);
+  const max = Math.floor(Math.min(left, isFinite(power) ? power : left) / price);
+  return { left, max };
+}
+function holdBlock(sym, max, left) {
+  if (!S.clock || !S.account) return "Loading\u2026";
+  if (!S.clock.is_open) return "You can buy to hold while the market is open (8:30 AM\u20133:00 PM CT).";
+  if (S.positions.some((p) => p.symbol === sym)) return isSwing(sym) ? "Already a swing hold. See the Bot tab." : "The bot is day trading this one right now.";
+  if (max < 1) return `${money(left)} of swing money left isn't enough for 1 share.`;
+  return "";
+}
+function holdRow(sym, q) {
+  const { left, max } = holdLimits(q.price);
+  const block = holdBlock(sym, max, left);
+  const qty = Math.max(1, Math.min(S.holdQty, Math.max(1, max)));
+  if (block) return `<div class="note">${esc(block)}</div>`;
+  return `<div class="row" style="margin-top:12px;align-items:center"><div class="step">` +
+    `<button data-act="hold-qty" data-d="-1" aria-label="Fewer shares">\u2212</button><b>${qty}</b>` +
+    `<button data-act="hold-qty" data-d="1" data-max="${max}" aria-label="More shares">+</button></div>` +
+    `<div class="sub" style="text-align:right">\u2248 ${money(qty * q.price)}<br>${money(left)} of ${money(SWING_BUDGET)} swing money left</div></div>` +
+    `<button class="qb hold" style="width:100%;margin-top:8px" data-act="hold" data-sym="${esc(sym)}">Buy ${qty} to hold</button>`;
+}
+
+// ---------------- options watch ----------------
+function etMinutes(t = Date.now()) { const p = zoneParts(new Date(t), "America/New_York"); return +p.hour * 60 + +p.minute; }
+
+// First 15 minutes' high/low and VWAP, the same way the bot works them out
+function rangeOf(sym, day) {
+  const bars = (S.mkBars[day] || {})[sym] || [];
+  const end = etInstant(day, 9, 45).getTime();
+  const early = bars.filter((b) => new Date(b.t).getTime() < end);
+  let vol = 0, pv = 0;
+  for (const b of bars) { vol += num(b.v); pv += num(b.vw || b.c) * num(b.v); }
+  const vwap = vol > 0 ? pv / vol : NaN;
+  if (!early.length) return null;
+  return { hi: Math.max(...early.map((b) => b.h)), lo: Math.min(...early.map((b) => b.l)), vwap,
+           done: day !== etDate(Date.now()) || Date.now() >= end };
+}
+
+function watchStatus(r, price) {
+  if (!r.done) return ["wait", "Setting the range"];
+  const up = r.hi * (1 + OPT_CHASE_PCT / 100), dn = r.lo * (1 - OPT_CHASE_PCT / 100);
+  if (price > r.hi) {
+    if (price > up) return ["late", "Ran past · too late"];
+    if (isFinite(r.vwap) && price < r.vwap) return ["wait", "Above range, under VWAP"];
+    return ["call", "▲ Breakout · call"];
+  }
+  if (price < r.lo) {
+    if (price < dn) return ["late", "Fell past · too late"];
+    if (isFinite(r.vwap) && price > r.vwap) return ["wait", "Below range, over VWAP"];
+    return ["put", "▼ Breakdown · put"];
+  }
+  return ["wait", "Inside range · waiting"];
+}
+
+function meter(r, price) {
+  const span = r.hi - r.lo || r.hi * 0.001;
+  let a = Math.min(r.lo - span * 0.8, price), b = Math.max(r.hi + span * 0.8, price);
+  const pad = (b - a) * 0.05; a -= pad; b += pad;
+  const X = (v) => Math.max(0, Math.min(100, ((v - a) / (b - a)) * 100));
+  const dn = r.lo * (1 - OPT_CHASE_PCT / 100), up = r.hi * (1 + OPT_CHASE_PCT / 100);
+  const zone = (from, to, color) => `<span style="left:${X(from).toFixed(2)}%;width:${Math.max(0, X(to) - X(from)).toFixed(2)}%;background:${color}"></span>`;
+  return `<div class="mtr">` +
+    zone(a, dn, "rgba(245,185,66,.25)") + zone(dn, r.lo, "rgba(255,92,92,.75)") + zone(r.lo, r.hi, "#2a3644") +
+    zone(r.hi, up, "rgba(46,204,113,.75)") + zone(up, b, "rgba(245,185,66,.25)") +
+    `<i style="left:${X(price).toFixed(2)}%"></i></div>`;
+}
+
+function quickBlock() {
+  if (!S.clock || !S.account) return "Loading…";
+  if (!S.clock.is_open) return "Market is closed";
+  const m = etMinutes();
+  if (m < 9 * 60 + 31) return "Wait for the open";
+  if (m >= 15 * 60 + 15) return "No new same-day options after 2:15 PM CT";
+  if (S.mt) return "Finish your current option first";
+  if (S.positions.some((p) => isOption(p.symbol))) return "Already holding an option (sell it first)";
+  return "";
+}
+
+function optionsWatch(day) {
+  const m = etMinutes(), open = S.clock && S.clock.is_open;
+  let h = `<h2>Options watch</h2><div class="card">`;
+  h += `<div class="sub" style="margin-bottom:10px">The bot buys a same-day <b class="pos">call</b> when SPY or QQQ breaks above its 8:30–8:45 range and a <b class="neg">put</b> when it breaks below${m >= 12 * 60 && open ? " (its window closed at 11:00 CT)" : ", until 11:00 CT"}.</div>`;
+  const block = quickBlock();
+  for (const und of OPT_UNDERLYINGS) {
+    const q = quote(und), r = rangeOf(und, day);
+    h += `<div class="ow"><div class="row"><div><span class="sym">${und}</span> <span class="p" style="font-weight:700">${q ? q.price.toFixed(2) : "—"}</span></div>`;
+    if (!q || !r) { h += `<span class="st wait">${open ? "Waiting for data" : "No range yet"}</span></div></div>`; continue; }
+    const [k, txt] = watchStatus(r, q.price);
+    h += `<span class="st ${k}">${esc(txt)}</span></div>` + meter(r, q.price);
+    const toCall = r.hi - q.price, toPut = q.price - r.lo;
+    h += `<div class="mlab"><span>Put below <b class="neg">${r.lo.toFixed(2)}</b>${toPut > 0 ? ` · ${toPut.toFixed(2)} away` : ""}</span>` +
+      `<span>Call above <b class="pos">${r.hi.toFixed(2)}</b>${toCall > 0 ? ` · ${toCall.toFixed(2)} away` : ""}</span></div>` +
+      (isFinite(r.vwap) ? `<div class="mlab" style="justify-content:center;margin-top:2px">VWAP ${r.vwap.toFixed(2)}</div>` : "");
+    const busy = S.qtBusy && S.qtBusy.startsWith(und);
+    h += `<div class="qt"><button class="qb call" data-act="qt" data-und="${und}" data-kind="call" ${block || busy ? "disabled" : ""}>${busy && S.qtBusy.endsWith("call") ? "Finding…" : "▲ Buy call"}</button>` +
+      `<button class="qb put" data-act="qt" data-und="${und}" data-kind="put" ${block || busy ? "disabled" : ""}>${busy && S.qtBusy.endsWith("put") ? "Finding…" : "▼ Buy put"}</button></div></div>`;
+  }
+  h += `<div class="tmr">Auto-sell after ` + TIMERS.map(([s, l]) =>
+    `<button class="chip ${S.timer === s ? "on" : ""}" data-act="timer" data-sec="${s}">${l}</button>`).join("") + `</div>`;
+  if (block && open && block !== "Loading…") h += `<div class="note">${esc(block)}</div>`;
+  for (const p of S.positions.filter((x) => isOption(x.symbol))) h += `<div style="margin-top:12px">${optionCard(p)}</div>`;
+  h += `<div class="note">You buy 1 contract that expires today (about $100 max, practice money). The bot also sells any option at +60%, −40% or after 20 minutes, yours too. Very short trades usually lose a little, because you buy at the higher ask price and sell at the lower bid. The timer only runs while this app is open; if it's closed when time is up, it sells as soon as you open it again.</div></div>`;
   return h;
 }
 
@@ -645,6 +928,8 @@ function marketView() {
   const idxOpen = INDEXES.find((i) => i[0] === S.expanded);
   if (idxOpen) h += `<div class="card" style="margin-top:8px">${quoteRow(idxOpen[0], false)}</div>`;
 
+  h += optionsWatch(day);
+
   h += `<h2>My watchlist</h2><div class="card">` +
     (S.myList.length ? S.myList.map((sym) => quoteRow(sym, true)).join("") : `<div class="sub">Add any stock or ETF to keep an eye on it.</div>`) +
     `<form class="addrow" id="addform"><input id="addsym" placeholder="Symbol, e.g. AAPL" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">` +
@@ -666,11 +951,38 @@ function marketView() {
   return h;
 }
 
+// Confirm before any buy
+function sheetView() {
+  const sh = S.sheet;
+  const kv = (k, v) => `<div class="kv"><span class="muted">${k}</span><span>${v}</span></div>`;
+  let h = `<div class="sheet-bg" data-act="sheet-cancel"></div><div class="sheet">`;
+  if (sh.type === "opt") {
+    const cost = sh.ask * 100;
+    h += `<div class="big">Buy 1 ${esc(optLabel(sh.sym))}</div><div class="sub">Expires today at the close · practice money</div>` +
+      kv(`${sh.und} now`, sh.price.toFixed(2)) +
+      kv("Option price", `${sh.ask.toFixed(2)} ask / ${sh.bid.toFixed(2)} bid`) +
+      kv("Cost", `≈ ${money(cost)} <span class="muted">(×100 shares)</span>`) +
+      kv("Auto-sell", sh.timer ? `after ${TIMERS.find((t) => t[0] === sh.timer)[1]}` : "off, sell when you want") +
+      kv("Bot safety exits", "+60% / −40% / 20 min");
+  } else {
+    const cost = sh.qty * sh.price;
+    h += `<div class="big">Buy ${sh.qty} ${esc(sh.sym)} to hold</div><div class="sub">Kept overnight until you sell · practice money</div>` +
+      kv("Price now", sh.price.toFixed(2)) +
+      kv("Cost", `≈ ${money(cost)}`) +
+      kv("Protective stop", `${sh.stop.toFixed(2)} <span class="muted">(−${SWING_STOP_PCT}%, stays on)</span>`) +
+      kv("Swing money left after", money(Math.max(0, sh.left - cost)));
+  }
+  if (sh.err) h += `<div class="banner err">${esc(sh.err)}</div>`;
+  h += `<div class="btns"><button class="btn ghost" data-act="sheet-cancel">Cancel</button>` +
+    `<button class="btn green" data-act="sheet-buy" ${sh.busy ? "disabled" : ""}>${sh.busy ? "Sending…" : sh.type === "opt" ? `Buy ≈ ${money(sh.ask * 100)}` : `Buy ≈ ${money(sh.qty * sh.price)}`}</button></div></div>`;
+  return h;
+}
+
 function setupView() {
   return `<div class="top"><div class="brand">🤖 Paper Bot</div></div>
   <form class="setup" id="setup">
     <div class="big">Connect your paper account</div>
-    <div class="note">Paste your Alpaca <b>paper</b> API keys. They're saved only on this phone and sent only to Alpaca. This app can't place trades.</div>
+    <div class="note">Paste your Alpaca <b>paper</b> API keys. They're saved only on this phone and sent only to Alpaca. This app only works with practice money.</div>
     <label for="k">API Key ID</label><input id="k" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PK…">
     <label for="s">Secret Key</label><input id="s" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button class="btn" id="go" type="submit">Connect</button>
@@ -700,9 +1012,23 @@ document.addEventListener("click", (e) => {
     if (S.tab === "market" && (!S.mkUpdate || Date.now() - S.mkUpdate > 8000)) loadMarket();
   }
   if (act === "sort") { S.sortBy = b.dataset.sort; savePref("paperbot_sort", S.sortBy); render(); }
+  if (act === "timer") { S.timer = Number(b.dataset.sec); savePref("paperbot_timer", String(S.timer)); render(); }
+  if (act === "qt") startQuick(b.dataset.und, b.dataset.kind);
+  if (act === "sheet-cancel") { if (!(S.sheet && S.sheet.busy)) { S.sheet = null; render(); } }
+  if (act === "sheet-buy") confirmSheet();
+  if (act === "hold") openHold(b.dataset.sym);
+  if (act === "hold-qty") {
+    const max = Number(b.dataset.max || Infinity);
+    S.holdQty = Math.max(1, Math.min(S.holdQty + Number(b.dataset.d), isFinite(max) ? max : S.holdQty + 1)); render();
+  }
+  if (act === "sell") {
+    const sym = b.dataset.sym;
+    if (S.armSell && S.armSell.sym === sym && Date.now() < S.armSell.until) sellPosition(sym, "");
+    else { S.armSell = { sym, until: Date.now() + 3000 }; render(); setTimeout(render, 3100); }
+  }
   if (act === "expand") {
     const sym = b.dataset.sym;
-    S.expanded = S.expanded === sym ? null : sym; render();
+    S.expanded = S.expanded === sym ? null : sym; S.holdQty = 1; render();
     if (S.expanded) loadMktBars(sessionDay(), [sym]).then(render);
   }
   if (act === "unwatch") {
@@ -848,6 +1174,131 @@ function onLiveTrade(sym, price, ts) {
   render();
 }
 
+// ---------------- your trades ----------------
+// Find today's closest-to-the-money call/put that fits the budget, then show the confirm sheet
+async function startQuick(und, kind) {
+  const block = quickBlock();
+  if (block) { toast(block); return; }
+  const q = quote(und);
+  if (!q) { toast(`No ${und} price yet`); return; }
+  S.qtBusy = und + kind; render();
+  try {
+    const price = q.price, today = etDate(Date.now());
+    const [lo, hi] = kind === "call" ? [price * 0.995, price * 1.02] : [price * 0.98, price * 1.005];
+    const res = await api(`/v1beta1/options/snapshots/${und}?feed=indicative&type=${kind}&expiration_date=${today}` +
+      `&strike_price_gte=${lo.toFixed(2)}&strike_price_lte=${hi.toFixed(2)}&limit=250`, DATA);
+    const a = S.account;
+    const budget = Math.min(num(a.equity) * OPT_BUDGET_PCT / 100, num(a.options_buying_power || a.buying_power));
+    let best = null;
+    for (const [sym, sn] of Object.entries((res && res.snapshots) || {})) {
+      if (!isOption(sym) || (sym.at(-9) === "C") !== (kind === "call")) continue;
+      const lq = sn.latestQuote || {}, ask = num(lq.ap), bid = num(lq.bp);
+      if (!(bid > 0) || !(ask >= 0.1) || ask * 100 > budget) continue;
+      const strike = +sym.slice(-8) / 1000;
+      if (!best || Math.abs(strike - price) < best.dist) best = { sym, ask, bid, strike, dist: Math.abs(strike - price) };
+    }
+    if (!best) { toast(`No ${und} ${kind} under ${money(budget)} right now`); return; }
+    S.sheet = { type: "opt", und, kind, price, timer: S.timer, at: Date.now(), ...best };
+  } catch (e) {
+    toast(e instanceof AuthError ? "Alpaca rejected the request" : "Couldn't load option prices. Try again.");
+  } finally { S.qtBusy = null; render(); }
+}
+
+function openHold(sym) {
+  const q = quote(sym);
+  if (!q) { toast(`No ${sym} price yet`); return; }
+  const { left, max } = holdLimits(q.price);
+  const block = holdBlock(sym, max, left);
+  if (block) { toast(block); return; }
+  const qty = Math.max(1, Math.min(S.holdQty, max));
+  S.sheet = { type: "hold", sym, qty, price: q.price, left, stop: Math.round(q.price * (1 - SWING_STOP_PCT / 100) * 100) / 100 };
+  render();
+}
+
+async function confirmSheet() {
+  const sh = S.sheet;
+  if (!sh || sh.busy) return;
+  sh.busy = true; sh.err = null; render();
+  try {
+    if (sh.type === "opt") {
+      const o = await apiSend("POST", "/v2/orders", { symbol: sh.sym, qty: "1", side: "buy", type: "market",
+        time_in_force: "day", client_order_id: `app-opt-${Date.now()}` });
+      S.mt = { id: o.id, sym: sh.sym, timer: sh.timer, placed: Date.now(), state: "pending" }; saveMt();
+      toast(`Order sent: 1 ${optLabel(sh.sym)}`);
+      setTimeout(tickManual, 600);
+    } else {
+      await apiSend("POST", "/v2/orders", { symbol: sh.sym, qty: String(sh.qty), side: "buy", type: "market",
+        time_in_force: "gtc", order_class: "oto", stop_loss: { stop_price: sh.stop.toFixed(2) },
+        client_order_id: `app-swing-${Date.now()}` });
+      toast(`Order sent: ${sh.qty} ${sh.sym} to hold`);
+      S.swingSig = null; setTimeout(loadAll, 1500);
+    }
+    S.sheet = null;
+  } catch (e) {
+    sh.busy = false; sh.err = e.message || "Order didn't go through";
+  }
+  render();
+}
+
+// Cancel any stop/target orders on it, then sell the whole position
+async function sellPosition(sym, why) {
+  S.armSell = null; render();
+  try {
+    const open = await api(`/v2/orders?status=open&symbols=${encodeURIComponent(sym)}`);
+    for (const o of open || []) await apiSend("DELETE", `/v2/orders/${o.id}`).catch(() => {});
+    await apiSend("DELETE", `/v2/positions/${encodeURIComponent(sym)}`);
+    toast(why ? `${why}: selling ${nameOf(sym)}` : `Selling ${nameOf(sym)}`);
+  } catch (e) {
+    if (e.status === 404) toast(`${nameOf(sym)} was already sold`);
+    else { toast(`Couldn't sell ${nameOf(sym)}: ${e.message}`); return false; }
+  }
+  if (S.mt && S.mt.sym === sym) clearMt();
+  S.swingSig = null;
+  setTimeout(loadAll, 1200);
+  return true;
+}
+
+// Every second: watch your option order fill, run the auto-sell timer, refresh option bids
+let mtBusy = false, ticksQ = 0;
+async function tickManual() {
+  if (!keys || document.visibilityState !== "visible") return;
+  const m = S.mt;
+  if (m && !mtBusy) {
+    mtBusy = true;
+    try {
+      if (m.state === "pending") {
+        const o = await apiSend("GET", `/v2/orders/${m.id}`);
+        if (o.status === "filled") {
+          m.state = "open"; m.filledAt = Date.parse(o.filled_at) || Date.now();
+          m.sellAt = m.timer ? m.filledAt + m.timer * 1000 : null; saveMt(); loadAll();
+        } else if (["canceled", "expired", "rejected", "done_for_day"].includes(o.status)) {
+          if (!m.canceling) toast(`Order ${o.status}: ${optLabel(m.sym)}`);
+          clearMt(); loadAll();
+        } else if (Date.now() - m.placed > 20000 && !m.canceling) {
+          m.canceling = true; saveMt();
+          await apiSend("DELETE", `/v2/orders/${m.id}`).catch(() => {});
+          toast("No fill in 20 seconds, so the order was canceled");
+        }
+      } else if (m.sellAt && Date.now() >= m.sellAt) {
+        const ok = await sellPosition(m.sym, "Timer up");
+        if (!ok && S.mt) { S.mt.sellAt = Date.now() + 3000; saveMt(); }
+      } else if (S.lastUpdate > (m.filledAt || 0) + 5000 && !S.positions.some((p) => p.symbol === m.sym)) {
+        clearMt(); // already sold (by you, the bot's safety exits, or end of day)
+      }
+    } catch (e) {
+      if (e.status === 404) clearMt();
+    } finally { mtBusy = false; }
+  }
+  const opts = S.positions.filter((p) => isOption(p.symbol)).map((p) => p.symbol);
+  if (opts.length && ticksQ++ % 3 === 0) {
+    api(`/v1beta1/options/quotes/latest?symbols=${opts.map(encodeURIComponent).join(",")}&feed=indicative`, DATA)
+      .then((r) => { for (const [s, q] of Object.entries((r && r.quotes) || {})) S.optQ[s] = { bp: q.bp, ap: q.ap, at: Date.now() }; render(); })
+      .catch(() => {});
+  }
+  if (S.mt || opts.length || S.armSell) render();
+}
+setInterval(tickManual, 1000);
+
 // ---------------- toast ----------------
 let toastTimer = null;
 function toast(msg) {
@@ -868,7 +1319,7 @@ function schedule() {
   setTimeout(() => { if (document.visibilityState === "visible") refresh(); schedule(); }, wait);
 }
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") { ticks = 0; refresh(); }
+  if (document.visibilityState === "visible") { ticks = 0; refresh(); tickManual(); }
   else { closeStreams(); }
 });
 
