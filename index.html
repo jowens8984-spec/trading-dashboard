@@ -295,14 +295,14 @@ const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "
 // Same rules as bot.py, so the app and the bot agree
 const OPT_UNDERLYINGS = ["SPY", "QQQ"];
 const OPT_CHASE_PCT = 0.3;          // bot won't buy once SPY/QQQ is this far past its range
-const OPT_BUDGET_PCT = 20;          // one contract, at most 20% of the account (~$100)
+const OPT_BUDGET_PCT = 25;          // one contract, at most 25% of the account (~$125)
 const SWING_BUDGET = 150;           // most in swing holds at once (the bot's and yours)
 const SWING_STOP_PCT = 7;           // protective stop under your swing buys
 const TIMERS = [[5, "5s"], [30, "30s"], [60, "1m"], [300, "5m"], [0, "Off"]];
 const MT_STORE = "paperbot_mt";
 const NOTE_STORE = "stinks_notes";
 const JOURNAL_DAYS = 90;            // how far back the journal looks
-const BOT_RISK_PCT = 1;             // what bot.py risks per stock trade (RISK_PER_TRADE_PCT)
+const BOT_RISK_PCT = 2;             // what bot.py risks per stock trade (RISK_PER_TRADE_PCT)
 const SETUPS = { orb: "Breakout", ict: "Sweep", "0dte": "0DTE (bot)", swing: "Swing (bot)", myopt: "Your options", myhold: "Your holds" };
 
 // ---------------- state ----------------
@@ -1022,7 +1022,7 @@ function optionsWatch(day) {
     `<button class="chip ${S.timer === s ? "on" : ""}" data-act="timer" data-sec="${s}">${l}</button>`).join("") + `</div>`;
   if (block && open && block !== "Loading…") h += `<div class="note">${esc(block)}</div>`;
   for (const p of S.positions.filter((x) => isOption(x.symbol))) h += `<div style="margin-top:12px">${optionCard(p)}</div>`;
-  h += `<div class="note">You buy 1 contract that expires today (about $100 max, practice money). The bot also sells any option at +60%, −40% or after 20 minutes, yours too. Very short trades usually lose a little, because you buy at the higher ask price and sell at the lower bid. The timer only runs while this app is open; if it's closed when time is up, it sells as soon as you open it again.</div></div>`;
+  h += `<div class="note">You buy 1 contract that expires today (about $${Math.round(5 * OPT_BUDGET_PCT)} max, practice money). The bot also sells any option at +60%, −40% or after 20 minutes, yours too. Very short trades usually lose a little, because you buy at the higher ask price and sell at the lower bid. The timer only runs while this app is open; if it's closed when time is up, it sells as soon as you open it again.</div></div>`;
   return h;
 }
 
@@ -1246,7 +1246,7 @@ function journalView() {
     `<div class="row"><div>Bot risk per stock trade</div><b class="ok">${BOT_RISK_PCT}% ✓</b></div>` +
     `<div class="row" style="margin-top:6px"><div>Biggest single loss</div><b class="${worstPct > 2 ? "warn" : "ok"}">${A.worst < 0 ? signed(A.worst) : "—"} (${worstPct.toFixed(1)}%)</b></div>` +
     `<div class="row" style="margin-top:6px"><div>Losses over 2% of the account</div><b class="${over.length ? "warn" : "ok"}">${over.length}</b></div>` +
-    (over.length ? `<div class="note">${over.length === 1 ? "That one came" : "Most of those came"} from ${esc(SETUPS[mostCommon(over.map((t) => t.setup))])}. Same-day options can lose up to 40% of their price before the bot sells (about 8% of a $500 account), so they break the 2% rule.</div>`
+    (over.length ? `<div class="note">${over.length === 1 ? "That one came" : "Most of those came"} from ${esc(SETUPS[mostCommon(over.map((t) => t.setup))])}. Same-day options can lose up to 40% of their price before the bot sells (about ${Math.round(OPT_BUDGET_PCT * 0.4)}% of the account), so they break the 2% rule.</div>`
       : `<div class="note">Every loss so far stayed under 2% of the account.</div>`) + `</div>`;
 
   // compounding
