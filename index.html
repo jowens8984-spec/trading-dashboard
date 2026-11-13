@@ -296,10 +296,11 @@ const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "
 const OPT_UNDERLYINGS = ["SPY", "QQQ"];
 const OPT_CHASE_PCT = 0.3;          // bot won't buy once SPY/QQQ is this far past its range
 const OPT_BUDGET_PCT = 25;          // one contract, at most 25% of the account (~$125)
-const SWING_BUDGET = 150;           // most in swing holds at once (the bot's and yours)
+const acctScale = () => (num(S.account && S.account.last_equity) || num(S.account && S.account.equity) || 500) / 500; // bot.py scales its dollar limits the same way
+const swingBudget = () => Math.round(150 * acctScale());   // most in swing holds at once (the bot's and yours): $150 per $500
 const SWING_STOP_PCT = 7;           // protective stop under your swing buys
 const TIMERS = [[5, "5s"], [30, "30s"], [60, "1m"], [300, "5m"], [0, "Off"]];
-const CRYPTO_BUDGET = 100;          // most in crypto at once (bot.py CRYPTO_BUDGET_DOLLARS)
+const cryptoBudget = () => Math.round(100 * acctScale());  // most in crypto at once: $100 per $500 (bot.py CRYPTO_BUDGET_DOLLARS)
 const MT_STORE = "paperbot_mt";
 const NOTE_STORE = "stinks_notes";
 const JOURNAL_DAYS = 90;            // how far back the journal looks
@@ -782,7 +783,7 @@ function botView() {
   // swing holds (kept overnight)
   const used = swingInUse();
   h += `<h2>Swing holds (${swingPos.length})</h2>`;
-  h += `<div class="sub" style="margin:-2px 2px 8px">${money(used)} of ${money(SWING_BUDGET)} swing money in use</div>`;
+  h += `<div class="sub" style="margin:-2px 2px 8px">${money(used)} of ${money(swingBudget())} swing money in use</div>`;
   if (!swingPos.length) {
     h += `<div class="card empty">Nothing held overnight. The bot looks for pullbacks in uptrending stocks from 9:00 AM, and you can buy to hold from any stock's chart on the Market tab.</div>`;
   }
@@ -790,7 +791,7 @@ function botView() {
 
   // crypto (trades day and night)
   h += `<h2>Crypto (${cryptoPos.length})</h2>`;
-  h += `<div class="sub" style="margin:-2px 2px 8px">${money(cryptoPos.reduce((a, p) => a + num(p.qty) * num(p.current_price), 0))} of ${money(CRYPTO_BUDGET)} crypto money in use \u00b7 open 24/7</div>`;
+  h += `<div class="sub" style="margin:-2px 2px 8px">${money(cryptoPos.reduce((a, p) => a + num(p.qty) * num(p.current_price), 0))} of ${money(cryptoBudget())} crypto money in use \u00b7 open 24/7</div>`;
   if (!cryptoPos.length) {
     h += `<div class="card empty">No crypto held. The bot checks ${CRYPTO_COINS.join(", ")} around the clock for a dip in an uptrend.</div>`;
   }
@@ -946,7 +947,7 @@ function quoteRow(sym, removable) {
 
 // ---------------- buy to hold (swing) ----------------
 function holdLimits(price) {
-  const left = Math.max(0, SWING_BUDGET - swingInUse());
+  const left = Math.max(0, swingBudget() - swingInUse());
   const power = num(S.account && S.account.buying_power);
   const max = Math.floor(Math.min(left, isFinite(power) ? power : left) / price);
   return { left, max };
@@ -966,7 +967,7 @@ function holdRow(sym, q) {
   return `<div class="row" style="margin-top:12px;align-items:center"><div class="step">` +
     `<button data-act="hold-qty" data-d="-1" aria-label="Fewer shares">\u2212</button><b>${qty}</b>` +
     `<button data-act="hold-qty" data-d="1" data-max="${max}" aria-label="More shares">+</button></div>` +
-    `<div class="sub" style="text-align:right">\u2248 ${money(qty * q.price)}<br>${money(left)} of ${money(SWING_BUDGET)} swing money left</div></div>` +
+    `<div class="sub" style="text-align:right">\u2248 ${money(qty * q.price)}<br>${money(left)} of ${money(swingBudget())} swing money left</div></div>` +
     `<button class="qb hold" style="width:100%;margin-top:8px" data-act="hold" data-sym="${esc(sym)}">Buy ${qty} to hold</button>`;
 }
 
@@ -1049,7 +1050,7 @@ function optionsWatch(day) {
     `<button class="chip ${S.timer === s ? "on" : ""}" data-act="timer" data-sec="${s}">${l}</button>`).join("") + `</div>`;
   if (block && open && block !== "Loading…") h += `<div class="note">${esc(block)}</div>`;
   for (const p of S.positions.filter((x) => isOption(x.symbol))) h += `<div style="margin-top:12px">${optionCard(p)}</div>`;
-  h += `<div class="note">You buy 1 contract that expires today (about $${Math.round(5 * OPT_BUDGET_PCT)} max, practice money). The bot also sells any option at +60%, −40% or after 20 minutes, yours too. Very short trades usually lose a little, because you buy at the higher ask price and sell at the lower bid. The timer only runs while this app is open; if it's closed when time is up, it sells as soon as you open it again.</div></div>`;
+  h += `<div class="note">You buy 1 contract that expires today (about $${Math.round(5 * OPT_BUDGET_PCT * acctScale())} max, practice money). The bot also sells any option at +60%, −40% or after 20 minutes, yours too. Very short trades usually lose a little, because you buy at the higher ask price and sell at the lower bid. The timer only runs while this app is open; if it's closed when time is up, it sells as soon as you open it again.</div></div>`;
   return h;
 }
 
