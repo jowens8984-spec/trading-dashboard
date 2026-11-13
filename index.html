@@ -304,7 +304,7 @@ const MT_STORE = "paperbot_mt";
 const NOTE_STORE = "stinks_notes";
 const JOURNAL_DAYS = 90;            // how far back the journal looks
 const BOT_RISK_PCT = 2;             // what bot.py risks per stock trade (RISK_PER_TRADE_PCT)
-const SETUPS = { orb: "Breakout", ict: "Sweep", "0dte": "0DTE (bot)", swing: "Swing (bot)", crypto: "Crypto", myopt: "Your options", myhold: "Your holds" };
+const SETUPS = { orb: "Breakout", ict: "Sweep", ext: "After hours", "0dte": "0DTE (bot)", swing: "Swing (bot)", crypto: "Crypto", myopt: "Your options", myhold: "Your holds" };
 
 // ---------------- state ----------------
 let keys = loadKeys();
@@ -600,6 +600,7 @@ function tripsFor(day) {
     t.pnl = t.sq && t.bq ? (t.sp - t.avgBuy * t.sq) * mult(t.symbol) : 0;
     const parent = parents.find((o) => o.symbol === t.symbol);
     t.sweep = !!parent && (parent.client_order_id || "").startsWith("ict-"); // bought on the liquidity-sweep setup
+    t.ext = !!parent && (parent.client_order_id || "").startsWith("ext-");   // bought outside regular hours
     const legs = (parent && parent.legs) || [];
     const tp = legs.find((l) => l.type === "limit");
     const sl = legs.find((l) => l.type === "stop" || l.type === "stop_limit");
@@ -767,7 +768,7 @@ function botView() {
     const qty = num(p.qty), entry = num(p.avg_entry_price), now = num(p.current_price);
     const upl = (now - entry) * qty * mult(p.symbol), uplPct = entry ? ((now - entry) / entry) * 100 : 0;
     if (isOption(p.symbol)) { h += optionCard(p); continue; }
-    h += `<div class="card"><div class="row"><div><span class="sym">${esc(p.symbol)}</span><span class="tag open">OPEN</span>${t.sweep ? `<span class="tag flat">SWEEP</span>` : ""}</div>` +
+    h += `<div class="card"><div class="row"><div><span class="sym">${esc(p.symbol)}</span><span class="tag open">OPEN</span>${t.sweep ? `<span class="tag flat">SWEEP</span>` : ""}${t.ext ? `<span class="tag flat">AFTER HRS</span>` : ""}</div>` +
       `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
       `<div class="row sub"><div>${qty} sh @ ${entry.toFixed(2)} → <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
       `<div class="levels"><span>Entry <b>${entry.toFixed(2)}</b></span>` +
@@ -815,7 +816,7 @@ function botView() {
         `<div>${clockTime(t.first)}\u2013${clockTime(t.last)}</div></div></div>`;
       continue;
     }
-    h += `<div class="card"><div class="row"><div><span class="sym">${esc(t.symbol)}</span><span class="tag ${tag}">${esc(t.reason.toUpperCase())}</span>${t.sweep ? `<span class="tag flat">SWEEP</span>` : ""}</div>` +
+    h += `<div class="card"><div class="row"><div><span class="sym">${esc(t.symbol)}</span><span class="tag ${tag}">${esc(t.reason.toUpperCase())}</span>${t.sweep ? `<span class="tag flat">SWEEP</span>` : ""}${t.ext ? `<span class="tag flat">AFTER HRS</span>` : ""}</div>` +
       `<div class="big ${cls(t.pnl)}">${t.open ? "—" : signed(t.pnl)}</div></div>` +
       `<div class="row sub"><div>${t.bq} sh · in ${isFinite(t.avgBuy) ? t.avgBuy.toFixed(2) : "—"} · out ${isFinite(t.avgSell) ? t.avgSell.toFixed(2) : "—"}</div>` +
       `<div>${clockTime(t.first)}–${clockTime(t.last)}</div></div>` +
@@ -1134,6 +1135,7 @@ function setupOf(order, sym) {
   if (t.startsWith("app-")) return isOption(sym) ? "myopt" : "myhold";
   if (t.startsWith("swing-")) return "swing";
   if (t.startsWith("ict-")) return "ict";
+  if (t.startsWith("ext-")) return "ext";   // after hours, overnight and pre-market
   return isOption(sym) ? "0dte" : "orb";   // before labels existed, every bot stock day trade was a breakout
 }
 
