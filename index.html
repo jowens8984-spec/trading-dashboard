@@ -22,7 +22,7 @@
     font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-text-size-adjust: 100%; }
   #app { max-width: 560px; margin: 0 auto;
-    padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 24px); }
+    padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 84px); }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .brand { font-weight: 700; font-size: 17px; letter-spacing: .2px; }
   .pill { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--card2);
@@ -86,11 +86,46 @@
   .btn:disabled { opacity: .6; }
   .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
   .settings { margin-top: 10px; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: rgba(11,15,20,.96);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .tabbar button { flex: 1; background: none; border: 0; color: var(--muted); padding: 9px 0 11px;
+    font-size: 12px; font-weight: 600; cursor: pointer; }
+  .tabbar button .ti { display: block; font-size: 20px; line-height: 1.25; }
+  .tabbar button.on { color: var(--text); }
+  .idx { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .idx .card { margin: 0; padding: 10px; }
+  .idx .nm { font-size: 12px; color: var(--muted); }
+  .idx .pr { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .idx .ch { font-size: 13px; font-weight: 600; }
+  .idx svg { display: block; width: 100%; height: 34px; margin-top: 6px; }
+  .q { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .q:last-child { border-bottom: 0; }
+  .q .s { width: 58px; font-weight: 700; flex: none; }
+  .q .held { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); margin-left: 4px; vertical-align: 2px; }
+  .q .rng { flex: 1; height: 4px; background: var(--line); border-radius: 2px; position: relative; min-width: 40px; }
+  .q .rng i { position: absolute; top: -3px; width: 10px; height: 10px; border-radius: 50%; margin-left: -5px; }
+  .q .p { width: 62px; text-align: right; font-variant-numeric: tabular-nums; flex: none; }
+  .q .c { width: 68px; text-align: right; font-weight: 700; font-size: 13px; padding: 3px 6px; border-radius: 6px;
+    font-variant-numeric: tabular-nums; flex: none; }
+  .c.up { background: rgba(46,204,113,.15); color: var(--green); }
+  .c.dn { background: rgba(255,92,92,.15); color: var(--red); }
+  .c.fl { background: var(--card2); color: var(--muted); }
+  .qx { padding: 2px 0 10px; border-bottom: 1px solid var(--line); }
+  .addrow { display: flex; gap: 8px; margin-top: 10px; }
+  .addrow input { flex: 1; min-width: 0; background: var(--card2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 9px 10px; font-size: 16px; text-transform: uppercase; }
+  .addrow button { background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 0 16px; font-weight: 700; font-size: 15px; }
+  .x { background: none; border: 0; color: var(--muted); font-size: 15px; padding: 2px 4px; cursor: pointer; flex: none; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="toast" class="toast"></div>
+<nav class="tabbar" id="tabbar" style="display:none">
+  <button data-act="tab" data-tab="bot"><span class="ti">🤖</span>Bot</button>
+  <button data-act="tab" data-tab="market"><span class="ti">📈</span>Market</button>
+</nav>
 <script>
 "use strict";
 // ---------------- config ----------------
@@ -100,6 +135,10 @@ const DATA = "https://data.alpaca.markets";
 const TRADE_WS = "wss://paper-api.alpaca.markets/stream";
 const DATA_WS = "wss://stream.data.alpaca.markets/v2/iex";
 const KEY_STORE = "paperbot_keys";
+const MY_STORE = "paperbot_mylist";
+const INDEXES = [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["DIA", "Dow"], ["IWM", "Russell 2000"]];
+// Same 50 stocks the bot scans (bot.py WATCHLIST)
+const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "AFRM", "T", "VZ", "CMCSA", "WBD", "NKE", "DKNG", "PFE", "INTC", "CSCO", "MRVL", "SMCI", "UBER", "SNAP", "JD", "SOUN", "IONQ", "RGTI", "F", "GM", "RIVN", "LCID", "NIO", "AAL", "DAL", "UAL", "CCL", "RKLB", "ACHR", "JOBY", "OXY", "DVN", "FCX", "NEM", "MARA", "RIOT", "CLSK", "IREN", "XLF", "SLV", "GDX", "IBIT"];
 
 // ---------------- state ----------------
 let keys = loadKeys();
@@ -107,6 +146,8 @@ const S = {
   account: null, clock: null, positions: [], orders: [], fills: [], history: null,
   barsByDay: {}, barsFetched: {}, chartsBroken: false, day: null, days: [],
   tradeWs: "off", dataWs: "off", lastUpdate: null, error: null, showSettings: false, loading: false,
+  tab: loadPref("paperbot_tab", "bot"), snaps: {}, mkBars: {}, mkFetched: {}, mkUpdate: null, mkError: null,
+  mkLoading: false, sortBy: loadPref("paperbot_sort", "up"), expanded: null, myList: loadMyList(),
 };
 
 function loadKeys() {
@@ -115,6 +156,13 @@ function loadKeys() {
 }
 function saveKeys(k) { try { localStorage.setItem(KEY_STORE, JSON.stringify(k)); } catch (e) {} }
 function forgetKeys() { try { localStorage.removeItem(KEY_STORE); } catch (e) {} }
+function loadPref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
+function savePref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function loadMyList() {
+  try { const l = JSON.parse(localStorage.getItem(MY_STORE) || "[]"); return Array.isArray(l) ? l.slice(0, 30) : []; }
+  catch (e) { return []; }
+}
+function saveMyList() { try { localStorage.setItem(MY_STORE, JSON.stringify(S.myList)); } catch (e) {} }
 
 // ---------------- helpers ----------------
 const $ = (s) => document.querySelector(s);
@@ -212,19 +260,8 @@ async function loadBars(day) {
   const key = day + "|" + syms.join(",");
   const last = S.barsFetched[key];
   if (last && (!isToday || Date.now() - last < 45000)) return; // past days never change
-  const start = etInstant(day, 9, 30).toISOString();
-  const end = new Date(Math.min(etInstant(day, 16, 0).getTime(), Date.now())).toISOString();
-  const out = {};
   try {
-    let token = "";
-    for (let i = 0; i < 5; i++) {
-      const q = `/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=5Min&start=${encodeURIComponent(start)}` +
-        `&end=${encodeURIComponent(end)}&feed=iex&limit=10000&adjustment=raw` + (token ? `&page_token=${token}` : "");
-      const res = await api(q, DATA);
-      for (const [sym, arr] of Object.entries(res.bars || {})) (out[sym] = out[sym] || []).push(...arr);
-      token = res.next_page_token;
-      if (!token) break;
-    }
+    const out = await fetchBars(day, syms);
     // keep live-built candles that are newer than what the API returned
     const prev = S.barsByDay[day] || {};
     for (const [sym, arr] of Object.entries(prev)) {
@@ -237,6 +274,76 @@ async function loadBars(day) {
   } catch (e) {
     if (e.network) S.chartsBroken = true;
   }
+}
+
+async function fetchBars(day, syms) {
+  const start = etInstant(day, 9, 30).toISOString();
+  const end = new Date(Math.min(etInstant(day, 16, 0).getTime(), Date.now())).toISOString();
+  const out = {};
+  let token = "";
+  for (let i = 0; i < 5; i++) {
+    const q = `/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=5Min&start=${encodeURIComponent(start)}` +
+      `&end=${encodeURIComponent(end)}&feed=iex&limit=10000&adjustment=raw` + (token ? `&page_token=${token}` : "");
+    const res = await api(q, DATA);
+    for (const [sym, arr] of Object.entries(res.bars || {})) (out[sym] = out[sym] || []).push(...arr);
+    token = res.next_page_token;
+    if (!token) break;
+  }
+  return out;
+}
+
+// ---------------- market ----------------
+async function loadMarket() {
+  if (!keys || S.mkLoading) return;
+  S.mkLoading = true;
+  try {
+    const syms = [...new Set([...INDEXES.map((i) => i[0]), ...S.myList, ...BOT_WATCHLIST])];
+    const snaps = {};
+    for (let i = 0; i < syms.length; i += 100) {
+      const part = syms.slice(i, i + 100).map(encodeURIComponent).join(",");
+      Object.assign(snaps, await api(`/v2/stocks/snapshots?symbols=${part}&feed=iex`, DATA));
+    }
+    S.snaps = snaps; S.mkUpdate = Date.now(); S.mkError = null;
+    const need = INDEXES.map((i) => i[0]);
+    if (S.expanded) need.push(S.expanded);
+    await loadMktBars(sessionDay(), need);
+  } catch (e) {
+    S.mkError = e instanceof AuthError ? "Alpaca rejected your keys. Check them in settings (\u2699)."
+      : e.network ? "Can't reach market data right now. Retrying\u2026" : e.message;
+  } finally {
+    S.mkLoading = false;
+    render();
+  }
+}
+
+function sessionDay() {
+  const spy = S.snaps.SPY;
+  const t = spy && spy.dailyBar && spy.dailyBar.t;
+  return t ? etDate(t) : etDate(Date.now());
+}
+
+async function loadMktBars(day, syms) {
+  const isToday = day === etDate(Date.now());
+  const want = syms.filter((sym) => {
+    const t = S.mkFetched[day + "|" + sym];
+    return !t || (isToday && Date.now() - t > 60000);
+  });
+  if (!want.length) return;
+  try {
+    const res = await fetchBars(day, want);
+    const store = (S.mkBars[day] = S.mkBars[day] || {});
+    for (const sym of want) { store[sym] = res[sym] || []; S.mkFetched[day + "|" + sym] = Date.now(); }
+  } catch (e) { /* charts just stay empty */ }
+}
+
+function quote(sym) {
+  const sn = S.snaps[sym];
+  if (!sn) return null;
+  const db = sn.dailyBar || {};
+  const price = isFinite(num(sn.latestTrade && sn.latestTrade.p)) ? num(sn.latestTrade.p) : num(db.c);
+  const prev = num(sn.prevDailyBar && sn.prevDailyBar.c);
+  if (!isFinite(price)) return null;
+  return { sym, price, prev, chg: prev ? ((price - prev) / prev) * 100 : NaN, lo: num(db.l), hi: num(db.h), open: num(db.o) };
 }
 
 // ---------------- trades ----------------
@@ -269,8 +376,8 @@ function tripsFor(day) {
 }
 
 // ---------------- charts ----------------
-function chart({ symbol, day, lines = [], markers = [], live = NaN }) {
-  const bars = ((S.barsByDay[day] || {})[symbol]) || [];
+function chart({ symbol, day, lines = [], markers = [], live = NaN, bars: given }) {
+  const bars = given || ((S.barsByDay[day] || {})[symbol]) || [];
   const W = 340, H = 170, L = 6, R = 50, T = 8, B = 20;
   const pw = W - L - R, ph = H - T - B;
   if (!bars.length) {
@@ -371,13 +478,30 @@ function statusPill() {
 }
 
 function draw() {
-  const app = $("#app");
-  if (!keys) { app.innerHTML = setupView(); return; }
+  const app = $("#app"), bar = $("#tabbar");
+  // keep whatever the user is typing (and the cursor) through re-renders
+  const ae = document.activeElement;
+  const keep = ae && ae.id && ae.tagName === "INPUT" ? { id: ae.id, v: ae.value, p: ae.selectionStart } : null;
+  if (!keys) { bar.style.display = "none"; app.innerHTML = setupView(); }
+  else {
+    bar.style.display = "flex";
+    for (const b of bar.querySelectorAll("button")) b.classList.toggle("on", b.dataset.tab === S.tab);
+    let h = `<div class="top"><div class="brand">${S.tab === "market" ? "\ud83d\udcc8 Market" : "\ud83e\udd16 Paper Bot"}</div><div>${statusPill()}<button class="icon-btn" data-act="settings" aria-label="Settings">\u2699</button></div></div>`;
+    if (S.showSettings) h += settingsView();
+    if (S.error && S.tab === "bot") h += `<div class="banner err">${esc(S.error)}</div>`;
+    h += S.tab === "market" ? marketView() : botView();
+    app.innerHTML = h;
+  }
+  if (keep) {
+    const el = document.getElementById(keep.id);
+    if (el) { el.value = keep.v; el.focus(); try { el.setSelectionRange(keep.p, keep.p); } catch (e) {} }
+  }
+}
+
+function botView() {
   const a = S.account;
-  let h = `<div class="top"><div class="brand">🤖 Paper Bot</div><div>${statusPill()}<button class="icon-btn" data-act="settings" aria-label="Settings">⚙</button></div></div>`;
-  if (S.showSettings) h += settingsView();
-  if (S.error) h += `<div class="banner err">${esc(S.error)}</div>`;
-  if (!a) { app.innerHTML = h + `<div class="empty">Loading your paper account…</div>`; return; }
+  let h = "";
+  if (!a) return h + `<div class="empty">Loading your paper account…</div>`;
 
   const equity = num(a.equity), last = num(a.last_equity), dayPnl = equity - last;
   h += `<div class="hero"><div class="label">Paper account</div><div class="equity">${money(equity)}</div>` +
@@ -439,7 +563,87 @@ function draw() {
   }
   if (S.chartsBroken) h += `<div class="banner">Price charts couldn't load from Alpaca's data feed. Trades and P&L still update.</div>`;
   h += `<div class="note" style="text-align:center;margin-top:18px">Read-only view of your Alpaca paper account.</div>`;
-  app.innerHTML = h;
+  return h;
+}
+
+
+function changeCls(c) { return !isFinite(c) ? "fl" : c > 0.005 ? "up" : c < -0.005 ? "dn" : "fl"; }
+function changeTxt(c) { return isFinite(c) ? (c >= 0 ? "+" : "") + c.toFixed(2) + "%" : "\u2014"; }
+
+function miniSpark(bars, prev, day) {
+  if (!bars || bars.length < 2) return `<svg viewBox="0 0 100 34"></svg>`;
+  const t0 = etInstant(day, 9, 30).getTime(), t1 = etInstant(day, 16, 0).getTime();
+  let lo = Math.min(...bars.map((b) => b.l)), hi = Math.max(...bars.map((b) => b.h));
+  if (isFinite(prev)) { lo = Math.min(lo, prev); hi = Math.max(hi, prev); }
+  if (hi - lo < 1e-9) { hi += 0.01; lo -= 0.01; }
+  const x = (t) => ((new Date(t).getTime() + 150000 - t0) / (t1 - t0)) * 100;
+  const y = (v) => 2 + (1 - (v - lo) / (hi - lo)) * 30;
+  const d = bars.map((b, i) => `${i ? "L" : "M"}${x(b.t).toFixed(2)},${y(b.c).toFixed(2)}`).join("");
+  const col = !isFinite(prev) || bars.at(-1).c >= prev ? "#2ecc71" : "#ff5c5c";
+  const base = isFinite(prev) ? `<line x1="0" x2="100" y1="${y(prev).toFixed(2)}" y2="${y(prev).toFixed(2)}" stroke="#243040" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>` : "";
+  return `<svg viewBox="0 0 100 34" preserveAspectRatio="none">${base}<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+}
+
+function quoteRow(sym, removable) {
+  const q = quote(sym);
+  const held = S.positions.some((p) => p.symbol === sym) ? `<span class="held" title="Bot holds this"></span>` : "";
+  const x = removable ? `<button class="x" data-act="unwatch" data-sym="${esc(sym)}" aria-label="Remove ${esc(sym)}">\u2715</button>` : "";
+  if (!q) return `<div class="q"><span class="s">${esc(sym)}</span><span class="sub" style="flex:1">No data</span>${x}</div>`;
+  const span = q.hi - q.lo;
+  const at = span > 0 ? Math.max(0, Math.min(100, ((q.price - q.lo) / span) * 100)) : 50;
+  const c = changeCls(q.chg);
+  const dot = c === "up" ? "#2ecc71" : c === "dn" ? "#ff5c5c" : "#8b98a8";
+  let h = `<div class="q" data-act="expand" data-sym="${esc(sym)}"><span class="s">${esc(sym)}${held}</span>` +
+    `<span class="rng" title="Today's low to high"><i style="left:${at.toFixed(1)}%;background:${dot}"></i></span>` +
+    `<span class="p">${q.price.toFixed(2)}</span><span class="c ${c}">${changeTxt(q.chg)}</span>${x}</div>`;
+  if (S.expanded === sym) {
+    const day = sessionDay();
+    h += `<div class="qx">${chart({ symbol: sym, day, bars: (S.mkBars[day] || {})[sym] || [], lines: [{ price: q.prev, color: "#8b98a8" }] })}` +
+      `<div class="levels"><span>Open <b>${isFinite(q.open) ? q.open.toFixed(2) : "\u2014"}</b></span>` +
+      `<span>High <b>${isFinite(q.hi) ? q.hi.toFixed(2) : "\u2014"}</b></span><span>Low <b>${isFinite(q.lo) ? q.lo.toFixed(2) : "\u2014"}</b></span>` +
+      `<span>Prev close <b>${isFinite(q.prev) ? q.prev.toFixed(2) : "\u2014"}</b></span></div></div>`;
+  }
+  return h;
+}
+
+function marketView() {
+  let h = "";
+  if (S.mkError) h += `<div class="banner err">${esc(S.mkError)}</div>`;
+  if (!Object.keys(S.snaps).length) return h + `<div class="empty" style="margin-top:30px">Loading market data\u2026</div>`;
+  const day = sessionDay(), today = etDate(Date.now()), open = S.clock && S.clock.is_open;
+  h += `<div class="meta" style="margin-top:12px">${open ? "Market open \u00b7 updates every 10s" : "Market closed \u00b7 showing " + esc(day === today ? "today" : dayLabel(day))}` +
+    ` \u00b7 ${S.mkUpdate ? clockTime(S.mkUpdate) : ""}</div>`;
+
+  h += `<h2>Indexes</h2><div class="idx">` + INDEXES.map(([sym, name]) => {
+    const q = quote(sym);
+    if (!q) return `<div class="card"><div class="nm">${esc(name)}</div><div class="sub">No data</div></div>`;
+    const c = changeCls(q.chg);
+    return `<div class="card" data-act="expand" data-sym="${sym}"><div class="nm">${esc(name)} \u00b7 ${sym}</div>` +
+      `<div class="pr">${q.price.toFixed(2)}</div><div class="ch ${c === "up" ? "pos" : c === "dn" ? "neg" : "muted"}">${changeTxt(q.chg)}</div>` +
+      miniSpark((S.mkBars[day] || {})[sym], q.prev, day) + `</div>`;
+  }).join("") + `</div>`;
+  const idxOpen = INDEXES.find((i) => i[0] === S.expanded);
+  if (idxOpen) h += `<div class="card" style="margin-top:8px">${quoteRow(idxOpen[0], false)}</div>`;
+
+  h += `<h2>My watchlist</h2><div class="card">` +
+    (S.myList.length ? S.myList.map((sym) => quoteRow(sym, true)).join("") : `<div class="sub">Add any stock or ETF to keep an eye on it.</div>`) +
+    `<form class="addrow" id="addform"><input id="addsym" placeholder="Symbol, e.g. AAPL" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">` +
+    `<button type="submit">Add</button></form></div>`;
+
+  const sorts = [["up", "Top gainers"], ["down", "Top losers"], ["az", "A\u2013Z"]];
+  const rows = BOT_WATCHLIST.slice();
+  const chg = (sym) => { const q = quote(sym); return q && isFinite(q.chg) ? q.chg : null; };
+  if (S.sortBy === "az") rows.sort();
+  else rows.sort((a, b) => {
+    const A = chg(a), B = chg(b);
+    if (A === null) return 1; if (B === null) return -1;
+    return S.sortBy === "up" ? B - A : A - B;
+  });
+  h += `<h2>Bot's watchlist (${BOT_WATCHLIST.length})</h2><div class="chips" style="margin-bottom:8px">` +
+    sorts.map(([k, l]) => `<button class="chip ${S.sortBy === k ? "on" : ""}" data-act="sort" data-sort="${k}">${l}</button>`).join("") +
+    `</div><div class="card">` + rows.map((sym) => quoteRow(sym, false)).join("") + `</div>` +
+    `<div class="note" style="text-align:center">Tap a stock for its chart. <span class="held"></span> = the bot owns it. Prices from Alpaca's free IEX feed.</div>`;
+  return h;
 }
 
 function setupView() {
@@ -470,9 +674,34 @@ document.addEventListener("click", (e) => {
   if (act === "refresh") { S.showSettings = false; loadAll(); }
   if (act === "logout") { forgetKeys(); keys = null; closeStreams(); Object.assign(S, { account: null, clock: null, showSettings: false, error: null }); render(); }
   if (act === "day") { S.day = b.dataset.day; render(); loadBars(S.day).then(render); }
+  if (act === "tab") {
+    S.tab = b.dataset.tab; savePref("paperbot_tab", S.tab); S.showSettings = false;
+    window.scrollTo(0, 0); render();
+    if (S.tab === "market" && (!S.mkUpdate || Date.now() - S.mkUpdate > 8000)) loadMarket();
+  }
+  if (act === "sort") { S.sortBy = b.dataset.sort; savePref("paperbot_sort", S.sortBy); render(); }
+  if (act === "expand") {
+    const sym = b.dataset.sym;
+    S.expanded = S.expanded === sym ? null : sym; render();
+    if (S.expanded) loadMktBars(sessionDay(), [sym]).then(render);
+  }
+  if (act === "unwatch") {
+    S.myList = S.myList.filter((x) => x !== b.dataset.sym); saveMyList();
+    if (S.expanded === b.dataset.sym) S.expanded = null;
+    render();
+  }
 });
 
 document.addEventListener("submit", async (e) => {
+  if (e.target.id === "addform") {
+    e.preventDefault();
+    const input = $("#addsym"), sym = input.value.trim().toUpperCase();
+    if (!/^[A-Z][A-Z.]{0,5}$/.test(sym)) { toast("Enter a ticker like AAPL"); return; }
+    if (!S.myList.includes(sym)) { S.myList.unshift(sym); S.myList = S.myList.slice(0, 30); saveMyList(); }
+    input.value = ""; input.blur();
+    render(); loadMarket();
+    return;
+  }
   if (e.target.id !== "setup") return;
   e.preventDefault();
   const key = $("#k").value.trim(), secret = $("#s").value.trim(), err = $("#setupErr"), go = $("#go");
@@ -481,7 +710,7 @@ document.addEventListener("submit", async (e) => {
   if (/^AK/i.test(key)) return fail("That looks like a live-money key. This app only works with paper keys (they start with PK).");
   go.disabled = true; go.textContent = "Checking…";
   keys = { key, secret };
-  try { await api("/v2/account"); saveKeys(keys); render(); loadAll(); }
+  try { await api("/v2/account"); saveKeys(keys); render(); loadAll(); if (S.tab === "market") loadMarket(); }
   catch (x) { keys = null; fail(x instanceof AuthError ? "Alpaca didn't accept those keys. Make sure they're from your paper account." : "Couldn't reach Alpaca. Check your connection and try again."); }
 });
 
@@ -608,17 +837,23 @@ function toast(msg) {
 }
 
 // ---------------- polling ----------------
+let ticks = 0;
+function refresh() {
+  if (S.tab === "market") { loadMarket(); if (ticks++ % 3 === 0) loadAll(); }
+  else loadAll();
+}
 function schedule() {
   const open = S.clock && S.clock.is_open;
-  setTimeout(() => { if (document.visibilityState === "visible") loadAll(); schedule(); }, open ? 15000 : 120000);
+  const wait = S.tab === "market" ? (open ? 10000 : 60000) : (open ? 15000 : 120000);
+  setTimeout(() => { if (document.visibilityState === "visible") refresh(); schedule(); }, wait);
 }
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") { loadAll(); }
+  if (document.visibilityState === "visible") { ticks = 0; refresh(); }
   else { closeStreams(); }
 });
 
 render();
-if (keys) loadAll();
+if (keys) { loadAll(); if (S.tab === "market") loadMarket(); }
 schedule();
 </script>
 </body>
