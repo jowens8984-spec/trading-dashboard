@@ -173,6 +173,11 @@ const signed = (x) => (x >= 0 ? "+" : "-") + "$" + Math.abs(x).toLocaleString("e
 const pct = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
 const cls = (x) => (x > 0.0049 ? "pos" : x < -0.0049 ? "neg" : "muted");
 const px = (x) => (Math.abs(x) >= 1000 ? x.toFixed(0) : x.toFixed(2));
+// Same-day options use OCC symbols like SPY251113C00602000; each contract covers 100 shares
+const isOption = (sym) => sym.length > 15 && /[CP]\d{8}$/.test(sym);
+const optLabel = (sym) => `${sym.slice(0, -15)} ${+sym.slice(-8) / 1000} ${sym.at(-9) === "C" ? "call" : "put"}`;
+const nameOf = (sym) => (isOption(sym) ? optLabel(sym) : sym);
+const mult = (sym) => (isOption(sym) ? 100 : 1);
 const clockTime = (t) => new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 
 function zoneParts(date, tz) {
@@ -250,7 +255,7 @@ async function loadAll() {
 function symbolsForDay(day) {
   const set = new Set(tripsFor(day).map((t) => t.symbol));
   if (day === etDate(Date.now())) S.positions.forEach((p) => set.add(p.symbol));
-  return [...set].sort();
+  return [...set].filter((sym) => !isOption(sym)).sort();
 }
 
 async function loadBars(day) {
@@ -363,7 +368,7 @@ function tripsFor(day) {
     t.avgBuy = t.bq ? t.bc / t.bq : NaN;
     t.avgSell = t.sq ? t.sp / t.sq : NaN;
     t.open = t.sq < t.bq - 1e-9;
-    t.pnl = t.sq && t.bq ? t.sp - t.avgBuy * t.sq : 0;
+    t.pnl = t.sq && t.bq ? (t.sp - t.avgBuy * t.sq) * mult(t.symbol) : 0;
     const parent = parents.find((o) => o.symbol === t.symbol);
     const legs = (parent && parent.legs) || [];
     const tp = legs.find((l) => l.type === "limit");
@@ -519,7 +524,15 @@ function botView() {
   for (const p of S.positions) {
     const t = tripsToday.find((x) => x.symbol === p.symbol) || {};
     const qty = num(p.qty), entry = num(p.avg_entry_price), now = num(p.current_price);
-    const upl = (now - entry) * qty, uplPct = entry ? ((now - entry) / entry) * 100 : 0;
+    const upl = (now - entry) * qty * mult(p.symbol), uplPct = entry ? ((now - entry) / entry) * 100 : 0;
+    if (isOption(p.symbol)) {
+      h += `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(p.symbol))}</span><span class="tag open">SAME-DAY</span></div>` +
+        `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
+        `<div class="row sub"><div>${qty} contract${qty === 1 ? "" : "s"} @ ${entry.toFixed(2)} \u2192 <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
+        `<div class="levels"><span>Sells at <b style="color:var(--green)">+60%</b> (${(entry * 1.6).toFixed(2)})</span>` +
+        `<span><b style="color:var(--red)">\u221240%</b> (${(entry * 0.6).toFixed(2)})</span><span>or after <b>20 min</b></span></div></div>`;
+      continue;
+    }
     h += `<div class="card"><div class="row"><div><span class="sym">${esc(p.symbol)}</span><span class="tag open">OPEN</span></div>` +
       `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
       `<div class="row sub"><div>${qty} sh @ ${entry.toFixed(2)} → <b style="color:var(--text)">${now.toFixed(2)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
@@ -544,6 +557,13 @@ function botView() {
   }
   for (const t of trips) {
     const tag = t.open ? "open" : t.pnl > 0.0049 ? "win" : t.pnl < -0.0049 ? "loss" : "flat";
+    if (isOption(t.symbol)) {
+      h += `<div class="card"><div class="row"><div><span class="sym">${esc(optLabel(t.symbol))}</span><span class="tag ${tag}">SAME-DAY</span></div>` +
+        `<div class="big ${cls(t.pnl)}">${t.open ? "\u2014" : signed(t.pnl)}</div></div>` +
+        `<div class="row sub"><div>${t.bq} contract${t.bq === 1 ? "" : "s"} \u00b7 in ${t.avgBuy.toFixed(2)} \u00b7 out ${isFinite(t.avgSell) ? t.avgSell.toFixed(2) : "\u2014"}</div>` +
+        `<div>${clockTime(t.first)}\u2013${clockTime(t.last)}</div></div></div>`;
+      continue;
+    }
     h += `<div class="card"><div class="row"><div><span class="sym">${esc(t.symbol)}</span><span class="tag ${tag}">${esc(t.reason.toUpperCase())}</span></div>` +
       `<div class="big ${cls(t.pnl)}">${t.open ? "—" : signed(t.pnl)}</div></div>` +
       `<div class="row sub"><div>${t.bq} sh · in ${isFinite(t.avgBuy) ? t.avgBuy.toFixed(2) : "—"} · out ${isFinite(t.avgSell) ? t.avgSell.toFixed(2) : "—"}</div>` +
@@ -559,7 +579,7 @@ function botView() {
   if (dayFills.length) {
     h += `<h2>Activity</h2><div class="card feed">` + dayFills.slice(0, 40).map((f) =>
       `<div class="item"><span class="side ${f.side === "buy" ? "buy" : "sell"}">${f.side === "buy" ? "BUY" : "SELL"}</span>` +
-      `<span><b>${esc(f.symbol)}</b> ${num(f.qty)} @ ${num(f.price).toFixed(2)}</span><span class="time">${clockTime(f.transaction_time)}</span></div>`).join("") + `</div>`;
+      `<span><b>${esc(nameOf(f.symbol))}</b> ${num(f.qty)} @ ${num(f.price).toFixed(2)}</span><span class="time">${clockTime(f.transaction_time)}</span></div>`).join("") + `</div>`;
   }
   if (S.chartsBroken) h += `<div class="banner">Price charts couldn't load from Alpaca's data feed. Trades and P&L still update.</div>`;
   h += `<div class="note" style="text-align:center;margin-top:18px">Read-only view of your Alpaca paper account.</div>`;
@@ -726,7 +746,7 @@ function closeStreams() {
 function syncStreams() {
   if (!keys || !S.clock) return;
   if (!tws && document.visibilityState === "visible") openTradeStream();
-  const syms = S.positions.map((p) => p.symbol).sort().join(",");
+  const syms = S.positions.map((p) => p.symbol).filter((x) => !isOption(x)).sort().join(",");
   const wantData = S.clock.is_open && syms && !dLimited && document.visibilityState === "visible";
   if (!wantData) { if (dws) { try { dws.close(); } catch (e) {} dws = null; dSyms = ""; } return; }
   if (!dws) openDataStream();
@@ -766,7 +786,7 @@ function onTradeUpdate(d) {
   const o = d.order || {};
   if (d.event === "fill" || d.event === "partial_fill") {
     const side = o.side === "buy" ? "BOUGHT" : "SOLD";
-    toast(`${side} ${num(d.qty || o.filled_qty)} ${o.symbol} @ ${num(d.price || o.filled_avg_price).toFixed(2)}`);
+    toast(`${side} ${num(d.qty || o.filled_qty)} ${nameOf(o.symbol || "")} @ ${num(d.price || o.filled_avg_price).toFixed(2)}`);
     try { navigator.vibrate && navigator.vibrate(120); } catch (e) {}
   }
   clearTimeout(refreshTimer);
@@ -781,7 +801,7 @@ function openDataStream() {
     let arr; try { arr = JSON.parse(decode(ev.data)); } catch (e) { return; }
     for (const m of [].concat(arr)) {
       if (m.T === "success" && m.msg === "connected") ws.send(JSON.stringify({ action: "auth", key: keys.key, secret: keys.secret }));
-      else if (m.T === "success" && m.msg === "authenticated") { dRetry = 0; S.dataWs = "live"; subscribeData(S.positions.map((p) => p.symbol).sort().join(",")); }
+      else if (m.T === "success" && m.msg === "authenticated") { dRetry = 0; S.dataWs = "live"; subscribeData(S.positions.map((p) => p.symbol).filter((x) => !isOption(x)).sort().join(",")); }
       else if (m.T === "error") { if ([402, 406, 409].includes(m.code)) dLimited = true; try { ws.close(); } catch (e) {} }
       else if (m.T === "t") onLiveTrade(m.S, m.p, m.t);
     }
@@ -822,7 +842,7 @@ function onLiveTrade(sym, price, ts) {
   }
   // keep the header in step with live prices
   if (S.account) {
-    const mv = S.positions.reduce((s, q) => s + num(q.qty) * num(q.current_price), 0);
+    const mv = S.positions.reduce((s, q) => s + num(q.qty) * num(q.current_price) * mult(q.symbol), 0);
     S.account.equity = String(num(S.account.cash) + mv);
   }
   render();
