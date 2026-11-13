@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0f14">
+<meta name="theme-color" content="#060708">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Paper Bot">
+<meta name="apple-mobile-web-app-title" content="STINKS">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
-<title>Paper Bot</title>
+<title>STINKS</title>
+<script>try { if (localStorage.getItem("stinks_boot") === "off") document.documentElement.classList.add("noboot"); } catch (e) {}</script>
 <style>
   :root {
-    --bg: #0b0f14; --card: #131a22; --card2: #18212b; --line: #243040; --text: #e6edf3;
-    --muted: #8b98a8; --green: #2ecc71; --red: #ff5c5c; --blue: #4da3ff; --amber: #f5b942;
+    --bg: #060708; --card: #0d0c09; --card2: #16130c; --line: #3b3016; --text: #f3e6c8;
+    --muted: #a38d63; --green: #5fe08a; --red: #ff5c4d; --blue: #4fd8ff; --amber: #ffb000;
   }
   * { box-sizing: border-box; }
   button { touch-action: manipulation; }
@@ -48,7 +49,7 @@
   .sym { font-size: 18px; font-weight: 700; }
   .tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-left: 6px; vertical-align: 2px;
     white-space: nowrap; display: inline-block; }
-  .tag.open { background: rgba(77,163,255,.15); color: var(--blue); }
+  .tag.open { background: rgba(79,216,255,.15); color: var(--blue); }
   .tag.win { background: rgba(46,204,113,.15); color: var(--green); }
   .tag.loss { background: rgba(255,92,92,.15); color: var(--red); }
   .tag.flat { background: var(--card2); color: var(--muted); }
@@ -88,7 +89,7 @@
   .btn:disabled { opacity: .6; }
   .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
   .settings { margin-top: 10px; }
-  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: rgba(11,15,20,.96);
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: rgba(6,7,8,.96);
     border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5;
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   .tabbar button { flex: 1; background: none; border: 0; color: var(--muted); padding: 9px 0 11px;
@@ -136,7 +137,7 @@
   .qb { flex: 1; border: 0; border-radius: 10px; padding: 11px 0; font-size: 15px; font-weight: 800; cursor: pointer; }
   .qb.call { background: rgba(46,204,113,.16); color: var(--green); }
   .qb.put { background: rgba(255,92,92,.16); color: var(--red); }
-  .qb.hold { background: rgba(77,163,255,.16); color: var(--blue); }
+  .qb.hold { background: rgba(79,216,255,.16); color: var(--blue); }
   .qb:disabled { opacity: .4; }
   .tmr { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
   .tmr .chip { padding: 4px 10px; }
@@ -145,7 +146,7 @@
   .sellbtn.armed { background: var(--red); color: #fff; }
   .cd { font-size: 13px; font-weight: 700; color: var(--amber); margin-top: 6px; font-variant-numeric: tabular-nums; }
   .tag.you { background: rgba(245,185,66,.15); color: var(--amber); }
-  .tag.swing { background: rgba(77,163,255,.15); color: var(--blue); }
+  .tag.swing { background: rgba(79,216,255,.15); color: var(--blue); }
   .step { display: flex; align-items: center; gap: 10px; }
   .step button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2);
     color: var(--text); font-size: 20px; font-weight: 700; cursor: pointer; }
@@ -161,14 +162,122 @@
   .sheet .btns .btn { margin-top: 0; }
   .btn.green { background: var(--green); color: #06210f; }
   .btn.red { background: var(--red); }
+
+  /* ===== STINKS: retro amber terminal theme ===== */
+  :root { --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace; }
+  html, body { font-family: var(--mono); font-size: 14px; }
+  button, input { font-family: inherit; }
+  body { background: radial-gradient(130% 70% at 50% 0%, #15110a 0%, var(--bg) 62%) fixed; }
+  body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 30;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .logo { width: 24px; height: 24px; color: var(--amber); flex: none; filter: drop-shadow(0 0 4px rgba(255,176,0,.5)); }
+  .wm { color: var(--amber); font-weight: 800; letter-spacing: 4px; text-shadow: 0 0 10px rgba(255,176,0,.45); }
+  .wm-sub { color: var(--muted); font-size: 11px; letter-spacing: 2px; font-weight: 600; }
+  .pill { background: transparent; border: 1px solid var(--line); border-radius: 2px; letter-spacing: .5px; }
+  .hero .label { letter-spacing: 1px; }
+  .hero .equity { color: var(--amber); text-shadow: 0 0 14px rgba(255,176,0,.35); }
+  h2 { color: var(--amber); font-size: 12px; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
+  h2::before { content: "//"; color: var(--muted); }
+  h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+  .card { position: relative; border-radius: 2px;
+    background: linear-gradient(180deg, rgba(255,176,0,.04), transparent 45%), var(--card); }
+  .card::before, .card::after { content: ""; position: absolute; width: 9px; height: 9px; pointer-events: none; }
+  .card::before { top: -1px; left: -1px; border-top: 2px solid var(--amber); border-left: 2px solid var(--amber); }
+  .card::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--amber); border-right: 2px solid var(--amber); }
+  .tag, .st, .side, .c, .chip, .btn, .qb, .sellbtn, .banner, .toast, .sheet, .step button,
+  .addrow input, .addrow button, form.setup input { border-radius: 2px; }
+  .sheet { border-radius: 4px 4px 0 0; border-top: 2px solid var(--amber); }
+  .tag.open, .tag.swing { background: rgba(79,216,255,.13); }
+  .btn { background: var(--amber); color: #140d00; letter-spacing: 1px; }
+  .btn.ghost { background: transparent; color: var(--amber); border: 1px solid var(--line); }
+  .btn.green { background: var(--green); color: #031a0b; }
+  .chip.on { background: var(--amber); color: #140d00; border-color: var(--amber); }
+  .addrow button { background: var(--amber); color: #140d00; }
+  .toast { background: var(--amber); color: #140d00; box-shadow: 0 0 22px rgba(255,176,0,.35); }
+  .icon-btn { color: var(--amber); }
+  .tabbar { border-top: 1px solid var(--line); }
+  .tabbar button { position: relative; letter-spacing: 2px; text-transform: uppercase; font-size: 11px; }
+  .tabbar button .ti svg { display: block; width: 22px; height: 22px; margin: 0 auto 3px; }
+  .tabbar button.on { color: var(--amber); }
+  .tabbar button.on::before { content: ""; position: absolute; top: -1px; left: 32%; right: 32%; height: 2px;
+    background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .q .rng i { border-radius: 1px; }
+  .sub { font-size: 12px; }
+  .levels { font-size: 11px; }
+  .row.sub > div:last-child { white-space: nowrap; }
+  .mlab { flex-wrap: wrap; gap: 2px 10px; font-size: 11px; }
+  .mlab span { white-space: nowrap; }
+  .mlab span:last-child { margin-left: auto; }
+
+  /* ===== journal ===== */
+  .kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .kpis .card { margin: 0; padding: 9px 10px; }
+  .kpis .k { color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+  .kpis .v { font-size: 16px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .jt { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .jt th { color: var(--muted); font-weight: 600; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    text-align: right; padding: 0 4px 6px; }
+  .jt th:first-child, .jt td:first-child { text-align: left; padding-left: 0; }
+  .jt td { text-align: right; padding: 7px 4px; border-top: 1px solid var(--line); white-space: nowrap; }
+  .hbar { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 4px 0; }
+  .hbar .h { width: 54px; color: var(--muted); flex: none; }
+  .hbar .bar { flex: 1; height: 8px; background: var(--card2); position: relative; }
+  .hbar .bar i { position: absolute; top: 0; bottom: 0; }
+  .hbar .t { width: 92px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+  .jtrade { padding: 9px 0; border-top: 1px solid var(--line); }
+  .jtrade:first-child { border-top: 0; }
+  .note-in { width: 100%; margin-top: 6px; background: var(--card2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 2px; padding: 7px 8px; font-size: 16px; }
+  .mynote { color: var(--amber); font-size: 12px; margin-top: 4px; }
+  .linkbtn { white-space: nowrap; margin-left: 8px; background: none; border: 0; color: var(--muted); font-size: 11px; padding: 0; text-decoration: underline; cursor: pointer; }
+  .ok { color: var(--green); } .warn { color: var(--amber); }
+
+  /* ===== startup screen ===== */
+  #boot { position: fixed; inset: 0; z-index: 40; background: radial-gradient(90% 60% at 50% 40%, #1a140a 0%, #050505 70%);
+    display: flex; align-items: center; justify-content: center; padding: 24px; color: var(--amber);
+    font-family: var(--mono); transition: opacity .35s ease; cursor: pointer; }
+  #boot.done { opacity: 0; pointer-events: none; }
+  .noboot #boot { display: none; }
+  .boot-in { width: 100%; max-width: 380px; }
+  .boot-logo { width: 74px; height: 74px; display: block; margin: 0 auto 14px; color: var(--amber);
+    filter: drop-shadow(0 0 10px rgba(255,176,0,.6)); }
+  .boot-wm { text-align: center; font-size: 40px; font-weight: 800; letter-spacing: 12px; padding-left: 12px;
+    text-shadow: 0 0 18px rgba(255,176,0,.55); animation: flick 2.4s steps(1) 1; }
+  .boot-tag { text-align: center; color: var(--muted); font-size: 10px; letter-spacing: 2.2px; margin: 6px 0 22px; }
+  #boot-log { margin: 0; min-height: 132px; font: 12px/1.65 var(--mono); color: #ffcf73; white-space: pre-wrap; }
+  #boot-log .ok { color: var(--green); }
+  #boot-log .warn { color: var(--amber); }
+  #boot-log .cur::after { content: "\2588"; animation: blink .8s steps(1) infinite; }
+  .boot-bar { height: 4px; margin-top: 14px; background: #2a2313; overflow: hidden; }
+  .boot-bar i { display: block; height: 100%; width: 0; background: var(--amber); box-shadow: 0 0 10px var(--amber);
+    transition: width .25s linear; }
+  .boot-skip { text-align: center; color: var(--muted); font-size: 10px; letter-spacing: 3px; margin-top: 16px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes flick { 0% { opacity: .2; } 6% { opacity: 1; } 9% { opacity: .35; } 12% { opacity: 1; } 40% { opacity: .85; } 42% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .boot-wm, #boot-log .cur::after { animation: none; }
+    #boot, .boot-bar i { transition: none; }
+  }
 </style>
 </head>
 <body>
+<div id="boot" data-act="boot-skip" aria-label="Starting STINKS">
+  <div class="boot-in">
+    <svg class="boot-logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M2 9V2h7M23 2h7v7M30 23v7h-7M9 30H2v-7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10 14v12M16 9v13M22 5v12" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="16" width="4" height="7" fill="currentColor"/><rect x="14" y="11" width="4" height="8" fill="currentColor"/><rect x="20" y="7" width="4" height="7" fill="currentColor"/></svg>
+    <div class="boot-wm">STINKS</div>
+    <div class="boot-tag">STOCK TRADING INTELLIGENCE KERNEL SYSTEM</div>
+    <pre id="boot-log"></pre>
+    <div class="boot-bar"><i></i></div>
+    <div class="boot-skip">TAP TO SKIP</div>
+  </div>
+</div>
 <div id="app"></div>
 <div id="toast" class="toast"></div>
 <nav class="tabbar" id="tabbar" style="display:none">
-  <button data-act="tab" data-tab="bot"><span class="ti">🤖</span>Bot</button>
-  <button data-act="tab" data-tab="market"><span class="ti">📈</span>Market</button>
+  <button data-act="tab" data-tab="bot"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="9.5" y="9.5" width="5" height="5" fill="currentColor"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" stroke="currentColor" stroke-width="1.6"/></svg></span>Bot</button>
+  <button data-act="tab" data-tab="market"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18" stroke="currentColor" stroke-width="1.6"/><path d="M4 17l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 5h4v4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>Market</button>
+  <button data-act="tab" data-tab="journal"><span class="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6"/><path d="M3 7h3M3 12h3M3 17h3" stroke="currentColor" stroke-width="1.6"/></svg></span>Journal</button>
 </nav>
 <script>
 "use strict";
@@ -191,6 +300,10 @@ const SWING_BUDGET = 150;           // most in swing holds at once (the bot's an
 const SWING_STOP_PCT = 7;           // protective stop under your swing buys
 const TIMERS = [[5, "5s"], [30, "30s"], [60, "1m"], [300, "5m"], [0, "Off"]];
 const MT_STORE = "paperbot_mt";
+const NOTE_STORE = "stinks_notes";
+const JOURNAL_DAYS = 90;            // how far back the journal looks
+const BOT_RISK_PCT = 1;             // what bot.py risks per stock trade (RISK_PER_TRADE_PCT)
+const SETUPS = { orb: "Breakout", ict: "Sweep", "0dte": "0DTE (bot)", swing: "Swing (bot)", myopt: "Your options", myhold: "Your holds" };
 
 // ---------------- state ----------------
 let keys = loadKeys();
@@ -202,7 +315,10 @@ const S = {
   mkLoading: false, sortBy: loadPref("paperbot_sort", "up"), expanded: null, myList: loadMyList(),
   timer: Number(loadPref("paperbot_timer", "30")), sheet: null, qtBusy: null, mt: loadMt(), optQ: {},
   armSell: null, swingBook: {}, swingSig: null, holdQty: 1,
+  journal: null, jUpdate: null, jError: null, jLoading: false, jEdit: null, jShow: 15, notes: loadNotes(),
 };
+function loadNotes() { try { const n = JSON.parse(localStorage.getItem(NOTE_STORE) || "{}"); return n && typeof n === "object" ? n : {}; } catch (e) { return {}; } }
+function saveNotes() { try { localStorage.setItem(NOTE_STORE, JSON.stringify(S.notes)); } catch (e) {} }
 function loadMt() { try { const m = JSON.parse(localStorage.getItem(MT_STORE) || "null"); return m && m.sym ? m : null; } catch (e) { return null; } }
 function saveMt() { try { S.mt ? localStorage.setItem(MT_STORE, JSON.stringify(S.mt)) : localStorage.removeItem(MT_STORE); } catch (e) {} }
 function clearMt() { S.mt = null; saveMt(); }
@@ -496,7 +612,7 @@ function chart({ symbol, day, lines = [], markers = [], live = NaN, bars: given 
   const pw = W - L - R, ph = H - T - B;
   if (!bars.length) {
     const msg = S.chartsBroken ? "Charts unavailable (data feed blocked)" : "Chart fills in as trading happens";
-    return `<svg viewBox="0 0 ${W} 60"><text x="${W / 2}" y="34" fill="#8b98a8" font-size="12" text-anchor="middle">${msg}</text></svg>`;
+    return `<svg viewBox="0 0 ${W} 60"><text x="${W / 2}" y="34" fill="#a38d63" font-size="12" text-anchor="middle">${msg}</text></svg>`;
   }
   const t0 = etInstant(day, 9, 30).getTime(), t1 = etInstant(day, 16, 0).getTime();
   let lo = Infinity, hi = -Infinity;
@@ -509,26 +625,26 @@ function chart({ symbol, day, lines = [], markers = [], live = NaN, bars: given 
   const x = (t) => L + ((new Date(t).getTime() - t0) / (t1 - t0)) * pw;
   const y = (p) => T + (1 - (p - lo) / (hi - lo)) * ph;
   let s = `<svg viewBox="0 0 ${W} ${H}" font-family="-apple-system,Segoe UI,Roboto,sans-serif">`;
-  s += `<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="#0f151c" rx="6"/>`;
+  s += `<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="#0a0907" rx="6"/>`;
   // horizontal grid + price labels (skip labels hidden behind a level tag)
   const tagYs = lines.filter((l) => isFinite(l.price)).map((l) => y(l.price));
   for (let i = 0; i <= 4; i++) {
     const p = lo + ((hi - lo) * i) / 4, yy = y(p).toFixed(1);
-    s += `<line x1="${L}" x2="${L + pw}" y1="${yy}" y2="${yy}" stroke="#1f2a36" stroke-width="1"/>`;
+    s += `<line x1="${L}" x2="${L + pw}" y1="${yy}" y2="${yy}" stroke="#2a2313" stroke-width="1"/>`;
     if (!tagYs.some((ty) => Math.abs(ty - yy) < 15))
-      s += `<text x="${L + pw + 4}" y="${+yy + 4}" fill="#6b7787" font-size="10">${px(p)}</text>`;
+      s += `<text x="${L + pw + 4}" y="${+yy + 4}" fill="#8a7650" font-size="10">${px(p)}</text>`;
   }
   // vertical grid each hour (labels in Central)
   for (let h = 10; h <= 15; h++) {
     const t = etInstant(day, h, 0).getTime(), xx = x(t).toFixed(1);
-    s += `<line x1="${xx}" x2="${xx}" y1="${T}" y2="${T + ph}" stroke="#1f2a36" stroke-width="1"/>`;
+    s += `<line x1="${xx}" x2="${xx}" y1="${T}" y2="${T + ph}" stroke="#2a2313" stroke-width="1"/>`;
     const lbl = new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric" }).replace(" ", "").toLowerCase();
-    s += `<text x="${xx}" y="${H - 6}" fill="#6b7787" font-size="10" text-anchor="middle">${lbl}</text>`;
+    s += `<text x="${xx}" y="${H - 6}" fill="#8a7650" font-size="10" text-anchor="middle">${lbl}</text>`;
   }
   // candles
   const cw = Math.max(1.5, (pw / 78) * 0.68);
   for (const b of bars) {
-    const xc = x(new Date(b.t).getTime() + 150000), up = b.c >= b.o, col = up ? "#2ecc71" : "#ff5c5c";
+    const xc = x(new Date(b.t).getTime() + 150000), up = b.c >= b.o, col = up ? "#5fe08a" : "#ff5c4d";
     const yo = y(b.o), yc = y(b.c), top = Math.min(yo, yc), hgt = Math.max(1, Math.abs(yc - yo));
     s += `<line x1="${xc.toFixed(1)}" x2="${xc.toFixed(1)}" y1="${y(b.h).toFixed(1)}" y2="${y(b.l).toFixed(1)}" stroke="${col}" stroke-width="1"/>`;
     s += `<rect x="${(xc - cw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${cw.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${col}"/>`;
@@ -539,7 +655,7 @@ function chart({ symbol, day, lines = [], markers = [], live = NaN, bars: given 
     const yy = y(l.price).toFixed(1);
     s += `<line x1="${L}" x2="${L + pw}" y1="${yy}" y2="${yy}" stroke="${l.color}" stroke-width="1.2" stroke-dasharray="5 4"/>`;
     s += `<rect x="${L + pw + 1}" y="${+yy - 8}" width="${R - 2}" height="16" rx="4" fill="${l.color}"/>`;
-    s += `<text x="${L + pw + R / 2}" y="${+yy + 4}" fill="#0b0f14" font-size="10" font-weight="700" text-anchor="middle">${px(l.price)}</text>`;
+    s += `<text x="${L + pw + R / 2}" y="${+yy + 4}" fill="#060708" font-size="10" font-weight="700" text-anchor="middle">${px(l.price)}</text>`;
   }
   // buy / sell markers
   for (const m of markers) {
@@ -548,12 +664,12 @@ function chart({ symbol, day, lines = [], markers = [], live = NaN, bars: given 
     const pts = m.side === "buy"
       ? `${xx},${yy + 3} ${xx - 6},${yy + 13} ${xx + 6},${yy + 13}`
       : `${xx},${yy - 3} ${xx - 6},${yy - 13} ${xx + 6},${yy - 13}`;
-    s += `<polygon points="${pts}" fill="${m.side === "buy" ? "#2ecc71" : "#ff5c5c"}" stroke="#0b0f14" stroke-width="1"/>`;
+    s += `<polygon points="${pts}" fill="${m.side === "buy" ? "#5fe08a" : "#ff5c4d"}" stroke="#060708" stroke-width="1"/>`;
   }
   // live price dot
   if (isFinite(live) && day === etDate(Date.now())) {
     const lastT = new Date(bars.at(-1).t).getTime() + 150000;
-    s += `<circle cx="${x(lastT).toFixed(1)}" cy="${y(live).toFixed(1)}" r="3.5" fill="#fff"/>`;
+    s += `<circle cx="${x(lastT).toFixed(1)}" cy="${y(live).toFixed(1)}" r="3.5" fill="#ffd27a"/>`;
   }
   return s + "</svg>";
 }
@@ -567,8 +683,8 @@ function sparkline(hist) {
   if (hi - lo < 0.01) { hi += 0.5; lo -= 0.5; }
   const x = (i) => (i / (pts.length - 1)) * W, y = (v) => 3 + (1 - (v - lo) / (hi - lo)) * (H - 6);
   const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
-  const col = pts.at(-1)[1] >= base ? "#2ecc71" : "#ff5c5c";
-  return `<svg viewBox="0 0 ${W} ${H}" class="spark"><line x1="0" x2="${W}" y1="${y(base)}" y2="${y(base)}" stroke="#243040" stroke-dasharray="3 4"/>` +
+  const col = pts.at(-1)[1] >= base ? "#5fe08a" : "#ff5c4d";
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark"><line x1="0" x2="${W}" y1="${y(base)}" y2="${y(base)}" stroke="#3b3016" stroke-dasharray="3 4"/>` +
     `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/></svg>`;
 }
 
@@ -607,10 +723,10 @@ function draw() {
   else {
     bar.style.display = "flex";
     for (const b of bar.querySelectorAll("button")) b.classList.toggle("on", b.dataset.tab === S.tab);
-    let h = `<div class="top"><div class="brand">${S.tab === "market" ? "\ud83d\udcc8 Market" : "\ud83e\udd16 Paper Bot"}</div><div>${statusPill()}<button class="icon-btn" data-act="settings" aria-label="Settings">\u2699</button></div></div>`;
+    let h = `<div class="top">${brand(S.tab === "market" ? "MARKET" : S.tab === "journal" ? "JOURNAL" : "BOT")}<div>${statusPill()}<button class="icon-btn" data-act="settings" aria-label="Settings">\u2699</button></div></div>`;
     if (S.showSettings) h += settingsView();
     if (S.error && S.tab === "bot") h += `<div class="banner err">${esc(S.error)}</div>`;
-    h += S.tab === "market" ? marketView() : botView();
+    h += S.tab === "market" ? marketView() : S.tab === "journal" ? journalView() : botView();
     if (S.sheet) h += sheetView();
     app.innerHTML = h;
   }
@@ -652,7 +768,7 @@ function botView() {
       (isFinite(t.stop) ? `<span>Stop <b style="color:var(--red)">${t.stop.toFixed(2)}</b></span>` : "") +
       (isFinite(t.target) ? `<span>Target <b style="color:var(--green)">${t.target.toFixed(2)}</b></span>` : "") + `</div>` +
       `<div class="chart">${chart({ symbol: p.symbol, day: today, live: now,
-        lines: [{ price: t.target, color: "#2ecc71" }, { price: entry, color: "#4da3ff" }, { price: t.stop, color: "#ff5c5c" }],
+        lines: [{ price: t.target, color: "#5fe08a" }, { price: entry, color: "#4fd8ff" }, { price: t.stop, color: "#ff5c4d" }],
         markers: (t.buys || []).map((f) => ({ t: f.transaction_time, price: num(f.price), side: "buy" })) })}</div></div>`;
   }
 
@@ -690,7 +806,7 @@ function botView() {
       `<div class="row sub"><div>${t.bq} sh · in ${isFinite(t.avgBuy) ? t.avgBuy.toFixed(2) : "—"} · out ${isFinite(t.avgSell) ? t.avgSell.toFixed(2) : "—"}</div>` +
       `<div>${clockTime(t.first)}–${clockTime(t.last)}</div></div>` +
       `<div class="chart">${chart({ symbol: t.symbol, day: S.day,
-        lines: [{ price: t.target, color: "#2ecc71" }, { price: t.avgBuy, color: "#4da3ff" }, { price: t.stop, color: "#ff5c5c" }],
+        lines: [{ price: t.target, color: "#5fe08a" }, { price: t.avgBuy, color: "#4fd8ff" }, { price: t.stop, color: "#ff5c4d" }],
         markers: [...t.buys.map((f) => ({ t: f.transaction_time, price: num(f.price), side: "buy" })),
                   ...t.sells.map((f) => ({ t: f.transaction_time, price: num(f.price), side: "sell" }))] })}</div></div>`;
   }
@@ -774,8 +890,8 @@ function miniSpark(bars, prev, day) {
   const x = (t) => ((new Date(t).getTime() + 150000 - t0) / (t1 - t0)) * 100;
   const y = (v) => 2 + (1 - (v - lo) / (hi - lo)) * 30;
   const d = bars.map((b, i) => `${i ? "L" : "M"}${x(b.t).toFixed(2)},${y(b.c).toFixed(2)}`).join("");
-  const col = !isFinite(prev) || bars.at(-1).c >= prev ? "#2ecc71" : "#ff5c5c";
-  const base = isFinite(prev) ? `<line x1="0" x2="100" y1="${y(prev).toFixed(2)}" y2="${y(prev).toFixed(2)}" stroke="#243040" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>` : "";
+  const col = !isFinite(prev) || bars.at(-1).c >= prev ? "#5fe08a" : "#ff5c4d";
+  const base = isFinite(prev) ? `<line x1="0" x2="100" y1="${y(prev).toFixed(2)}" y2="${y(prev).toFixed(2)}" stroke="#3b3016" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>` : "";
   return `<svg viewBox="0 0 100 34" preserveAspectRatio="none">${base}<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
 }
 
@@ -787,13 +903,13 @@ function quoteRow(sym, removable) {
   const span = q.hi - q.lo;
   const at = span > 0 ? Math.max(0, Math.min(100, ((q.price - q.lo) / span) * 100)) : 50;
   const c = changeCls(q.chg);
-  const dot = c === "up" ? "#2ecc71" : c === "dn" ? "#ff5c5c" : "#8b98a8";
+  const dot = c === "up" ? "#5fe08a" : c === "dn" ? "#ff5c4d" : "#a38d63";
   let h = `<div class="q" data-act="expand" data-sym="${esc(sym)}"><span class="s">${esc(sym)}${held}</span>` +
     `<span class="rng" title="Today's low to high"><i style="left:${at.toFixed(1)}%;background:${dot}"></i></span>` +
     `<span class="p">${q.price.toFixed(2)}</span><span class="c ${c}">${changeTxt(q.chg)}</span>${x}</div>`;
   if (S.expanded === sym) {
     const day = sessionDay();
-    h += `<div class="qx">${chart({ symbol: sym, day, bars: (S.mkBars[day] || {})[sym] || [], lines: [{ price: q.prev, color: "#8b98a8" }] })}` +
+    h += `<div class="qx">${chart({ symbol: sym, day, bars: (S.mkBars[day] || {})[sym] || [], lines: [{ price: q.prev, color: "#a38d63" }] })}` +
       `<div class="levels"><span>Open <b>${isFinite(q.open) ? q.open.toFixed(2) : "\u2014"}</b></span>` +
       `<span>High <b>${isFinite(q.hi) ? q.hi.toFixed(2) : "\u2014"}</b></span><span>Low <b>${isFinite(q.lo) ? q.lo.toFixed(2) : "\u2014"}</b></span>` +
       `<span>Prev close <b>${isFinite(q.prev) ? q.prev.toFixed(2) : "\u2014"}</b></span></div>` + holdRow(sym, q) + `</div>`;
@@ -979,8 +1095,228 @@ function sheetView() {
   return h;
 }
 
+const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M2 9V2h7M23 2h7v7M30 23v7h-7M9 30H2v-7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10 14v12M16 9v13M22 5v12" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="16" width="4" height="7" fill="currentColor"/><rect x="14" y="11" width="4" height="8" fill="currentColor"/><rect x="20" y="7" width="4" height="7" fill="currentColor"/></svg>`;
+function brand(sub) { return `<div class="brand">${LOGO}<span class="wm">STINKS</span><span class="wm-sub">// ${sub}</span></div>`; }
+
+// ---------------- journal ----------------
+// Which setup a trade came from, read off how its buy order was labeled
+function setupOf(order, sym) {
+  const t = (order && order.client_order_id) || "";
+  if (t.startsWith("app-opt-")) return "myopt";
+  if (t.startsWith("app-swing-")) return "myhold";
+  if (t.startsWith("app-")) return isOption(sym) ? "myopt" : "myhold";
+  if (t.startsWith("swing-")) return "swing";
+  if (t.startsWith("ict-")) return "ict";
+  return isOption(sym) ? "0dte" : "orb";   // before labels existed, every bot stock day trade was a breakout
+}
+
+async function loadJournal() {
+  if (!keys || S.jLoading) return;
+  S.jLoading = true;
+  try {
+    const after = new Date(Date.now() - JOURNAL_DAYS * 864e5).toISOString();
+    const fills = [];
+    let token = "";
+    for (let i = 0; i < 40; i++) {
+      const page = await api(`/v2/account/activities/FILL?after=${encodeURIComponent(after)}&direction=asc&page_size=100` +
+        (token ? `&page_token=${encodeURIComponent(token)}` : ""));
+      fills.push(...page);
+      if (page.length < 100) break;
+      token = page.at(-1).id;
+    }
+    const orders = [], seen = new Set();
+    let until = "";
+    for (let i = 0; i < 10; i++) {
+      const page = await api(`/v2/orders?status=all&after=${encodeURIComponent(after)}&limit=500&direction=desc&nested=true` +
+        (until ? `&until=${encodeURIComponent(until)}` : ""));
+      for (const o of page) if (!seen.has(o.id)) { seen.add(o.id); orders.push(o); }
+      if (page.length < 500) break;
+      until = page.at(-1).created_at;
+    }
+    const hist = await api("/v2/account/portfolio/history?period=3M&timeframe=1D").catch(() => null);
+    S.journal = buildJournal(fills, orders, hist);
+    S.jUpdate = Date.now(); S.jError = null;
+  } catch (e) {
+    S.jError = e instanceof AuthError ? "Alpaca rejected your keys. Check them in settings (⚙)."
+      : e.network ? "Can't reach Alpaca right now. Retrying…" : e.message;
+  } finally { S.jLoading = false; render(); }
+}
+
+// Turn fills into round trips (bought, then fully sold) and add them up
+function buildJournal(fills, orders, hist) {
+  const byId = {};
+  for (const o of orders) {
+    byId[o.id] = { o };
+    for (const l of o.legs || []) byId[l.id] = { o: l, parent: o };
+  }
+  const open = {}, trades = [];
+  const sorted = fills.slice().sort((a, b) => a.transaction_time.localeCompare(b.transaction_time));
+  for (const f of sorted) {
+    const sym = f.symbol, q = num(f.qty), p = num(f.price);
+    if (!(q > 0) || !isFinite(p)) continue;
+    let t = open[sym];
+    const ref = byId[f.order_id];
+    if (f.side === "buy") {
+      if (!t) {
+        const parent = ref && (ref.parent || ref.o);
+        const sl = parent && (parent.legs || []).find((l) => l.type === "stop" || l.type === "stop_limit");
+        t = open[sym] = { sym, setup: setupOf(parent, sym), entry: f.transaction_time, bq: 0, bc: 0, sq: 0, sp: 0,
+          stop: sl ? num(sl.stop_price) : NaN };
+      }
+      t.bq += q; t.bc += q * p;
+    } else {
+      if (!t) continue; // bought before the journal's window
+      t.sq += q; t.sp += q * p; t.exit = f.transaction_time;
+      t.how = ref && ref.parent ? (ref.o.type === "limit" ? "Target hit" : "Stopped out") : "Sold";
+      if (t.sq >= t.bq - 1e-9) {
+        const m = mult(sym);
+        t.avgIn = t.bc / t.bq; t.avgOut = t.sp / t.sq;
+        t.pnl = (t.sp - t.bc) * m;
+        t.r = isFinite(t.stop) && t.stop < t.avgIn ? (t.avgOut - t.avgIn) / (t.avgIn - t.stop) : NaN;
+        t.key = `${sym}|${t.entry}`;
+        trades.push(t);
+        delete open[sym];
+      }
+    }
+  }
+  trades.sort((a, b) => a.exit.localeCompare(b.exit));
+  const by = {};
+  for (const t of trades) (by[t.setup] = by[t.setup] || []).push(t);
+  const setups = Object.keys(SETUPS).filter((k) => by[k]).map((k) => ({ key: k, name: SETUPS[k], ...tally(by[k]) }));
+  // longest run of losing trades in a row
+  let run = 0, streak = 0;
+  for (const t of trades) { run = t.pnl < -0.005 ? run + 1 : 0; streak = Math.max(streak, run); }
+  // by time of day (Central), by entry hour
+  const hours = {};
+  for (const t of trades) {
+    const h = +zoneParts(new Date(t.entry), TZ).hour;
+    (hours[h] = hours[h] || []).push(t);
+  }
+  const byHour = Object.keys(hours).map(Number).sort((a, b) => a - b).map((h) => ({ h, ...tally(hours[h]) }));
+  // equity curve: worst drop from a high, and the weekly pace
+  const eq = hist && hist.equity ? hist.equity.map(num).filter((v) => v > 0) : [];
+  let peak = -Infinity, dd = 0;
+  for (const v of eq) { peak = Math.max(peak, v); dd = Math.max(dd, (peak - v) / peak * 100); }
+  const weeks = (eq.length - 1) / 5;
+  const weekly = eq.length >= 21 ? (Math.pow(eq.at(-1) / eq[0], 1 / weeks) - 1) * 100 : NaN;
+  return { trades, setups, all: tally(trades), streak, byHour, dd: eq.length > 1 ? dd : NaN, weekly, weeks, openCount: Object.keys(open).length };
+}
+
+function tally(list) {
+  const n = list.length;
+  const wins = list.filter((t) => t.pnl > 0.005), losses = list.filter((t) => t.pnl < -0.005);
+  const gw = wins.reduce((a, t) => a + t.pnl, 0), gl = losses.reduce((a, t) => a + t.pnl, 0);
+  const total = list.reduce((a, t) => a + t.pnl, 0);
+  const rs = list.map((t) => t.r).filter(isFinite);
+  return { n, wins: wins.length, losses: losses.length, rate: n ? (wins.length / n) * 100 : NaN,
+    avgWin: wins.length ? gw / wins.length : NaN, avgLoss: losses.length ? gl / losses.length : NaN,
+    pf: gl < 0 ? gw / -gl : gw > 0 ? Infinity : NaN, total, exp: n ? total / n : NaN,
+    avgR: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : NaN,
+    worst: losses.length ? Math.min(...losses.map((t) => t.pnl)) : 0 };
+}
+
+const fmtPct = (x, d = 0) => (isFinite(x) ? x.toFixed(d) + "%" : "—");
+const fmtMoney = (x) => (isFinite(x) ? signed(x) : "—");
+const fmtPf = (x) => (x === Infinity ? "∞" : isFinite(x) ? x.toFixed(2) : "—");
+const fmtR = (x) => (!isFinite(x) ? "\u2014" : Math.abs(x) < 0.005 ? "0.00R" : (x > 0 ? "+" : "") + x.toFixed(2) + "R");
+function when(iso) {
+  return new Date(iso).toLocaleString("en-US", { timeZone: TZ, weekday: "short", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function journalView() {
+  if (S.jError && !S.journal) return `<div class="banner err">${esc(S.jError)}</div>`;
+  const J = S.journal;
+  if (!J) return `<div class="empty" style="margin-top:30px">Reading your trade history…</div>`;
+  let h = `<div class="meta" style="margin-top:12px">Last ${JOURNAL_DAYS} days · ${J.all.n} finished trade${J.all.n === 1 ? "" : "s"}` +
+    (J.openCount ? ` · ${J.openCount} still open` : "") + ` · ${S.jUpdate ? clockTime(S.jUpdate) : ""}</div>`;
+  if (S.jError) h += `<div class="banner err">${esc(S.jError)}</div>`;
+  if (!J.all.n) return h + `<div class="card empty" style="margin-top:12px">No finished trades yet. Stats show up here after the first one closes.</div>`;
+  const A = J.all, eq = num(S.account && S.account.equity) || 500;
+  const kpi = (k, v, c = "") => `<div class="card"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`;
+  h += `<h2>Scorecard</h2><div class="kpis">` +
+    kpi("Total", fmtMoney(A.total), cls(A.total)) + kpi("Win rate", fmtPct(A.rate)) + kpi("Per trade", fmtMoney(A.exp), cls(A.exp)) +
+    kpi("Avg win", fmtMoney(A.avgWin), "pos") + kpi("Avg loss", fmtMoney(A.avgLoss), "neg") + kpi("Profit factor", fmtPf(A.pf)) +
+    kpi("Max drawdown", isFinite(J.dd) ? "-" + J.dd.toFixed(1) + "%" : "—", J.dd > 10 ? "neg" : "") +
+    kpi("Losses in a row", `${J.streak}`, J.streak >= 5 ? "neg" : "") + kpi("Avg result", fmtR(A.avgR), cls(A.avgR)) + `</div>`;
+
+  // risk: the 2% rule
+  const worstPct = (-A.worst / eq) * 100;
+  const over = J.trades.filter((t) => -t.pnl / eq * 100 > 2);
+  h += `<h2>Risk check · 2% rule</h2><div class="card">` +
+    `<div class="row"><div>Bot risk per stock trade</div><b class="ok">${BOT_RISK_PCT}% ✓</b></div>` +
+    `<div class="row" style="margin-top:6px"><div>Biggest single loss</div><b class="${worstPct > 2 ? "warn" : "ok"}">${A.worst < 0 ? signed(A.worst) : "—"} (${worstPct.toFixed(1)}%)</b></div>` +
+    `<div class="row" style="margin-top:6px"><div>Losses over 2% of the account</div><b class="${over.length ? "warn" : "ok"}">${over.length}</b></div>` +
+    (over.length ? `<div class="note">${over.length === 1 ? "That one came" : "Most of those came"} from ${esc(SETUPS[mostCommon(over.map((t) => t.setup))])}. Same-day options can lose up to 40% of their price before the bot sells (about 8% of a $500 account), so they break the 2% rule.</div>`
+      : `<div class="note">Every loss so far stayed under 2% of the account.</div>`) + `</div>`;
+
+  // compounding
+  h += `<h2>Compounding</h2><div class="card">`;
+  if (isFinite(J.weekly)) {
+    const year = eq * Math.pow(1 + J.weekly / 100, 52);
+    h += `<div class="row"><div>Pace over the last ${Math.round(J.weeks)} weeks</div><b class="${cls(J.weekly)}">${pct(J.weekly)} a week</b></div>` +
+      `<div class="row" style="margin-top:6px"><div>If that pace held for a year</div><b>${money(year)}</b></div>` +
+      `<div class="note">Not a prediction: it only holds if the edge holds and no big loss breaks the chain. 1% a week compounds to about +68% a year.</div>`;
+  } else {
+    h += `<div class="sub">Needs about 4 weeks of results to measure a pace. For scale: 1% a week compounds to about +68% a year; one 20% loss takes 25% of gains to win back.</div>`;
+  }
+  h += `</div>`;
+
+  // edge by setup
+  h += `<h2>Edge by setup</h2><div class="card"><table class="jt"><tr><th>Setup</th><th>Trades</th><th>Win</th><th>Avg W/L</th><th>Total</th></tr>` +
+    J.setups.map((x) => `<tr><td>${esc(x.name)}</td><td>${x.n}</td><td>${fmtPct(x.rate)}</td>` +
+      `<td><span class="pos">${isFinite(x.avgWin) ? "+" + x.avgWin.toFixed(2) : "—"}</span>/<span class="neg">${isFinite(x.avgLoss) ? x.avgLoss.toFixed(2) : "—"}</span></td>` +
+      `<td class="${cls(x.total)}">${signed(x.total)}</td></tr>`).join("") + `</table>` +
+    `<div class="note">A setup has an edge when "Per trade" stays positive over many trades. Under about 30 trades, these numbers are mostly luck.</div></div>`;
+
+  // time of day
+  const maxAbs = Math.max(...J.byHour.map((x) => Math.abs(x.total)), 0.01);
+  h += `<h2>By time of day</h2><div class="card">` + J.byHour.map((x) => {
+    const w = (Math.abs(x.total) / maxAbs) * 50, left = x.total >= 0 ? 50 : 50 - w;
+    const lbl = new Date(2000, 0, 1, x.h).toLocaleTimeString("en-US", { hour: "numeric" });
+    return `<div class="hbar"><span class="h">${lbl}</span><span class="bar"><i style="left:${left.toFixed(1)}%;width:${w.toFixed(1)}%;background:${x.total >= 0 ? "var(--green)" : "var(--red)"}"></i></span>` +
+      `<span class="t"><span class="${cls(x.total)}">${signed(x.total)}</span> · ${x.n}</span></div>`;
+  }).join("") + `<div class="note">Times are when trades started (Central). Look for hours that keep losing.</div></div>`;
+
+  // the tape
+  const list = J.trades.slice().reverse();
+  h += `<h2>Trades</h2><div class="card">` + list.slice(0, S.jShow).map((t) => {
+    const note = S.notes[t.key] || "";
+    const tag = t.pnl > 0.005 ? "win" : t.pnl < -0.005 ? "loss" : "flat";
+    let x = `<div class="jtrade"><div class="row"><div><b>${esc(nameOf(t.sym))}</b><span class="tag ${tag}">${esc(SETUPS[t.setup].toUpperCase())}</span></div>` +
+      `<b class="${cls(t.pnl)}">${signed(t.pnl)}</b></div>` +
+      `<div class="row sub"><div>${esc(when(t.entry))} · ${esc(t.how)}${isFinite(t.r) ? " · " + fmtR(t.r) : ""}</div>` +
+      `<button class="linkbtn" data-act="jnote" data-key="${esc(t.key)}">${note ? "Edit note" : "Add note"}</button></div>`;
+    if (S.jEdit === t.key) {
+      x += `<form class="jnote-form" data-key="${esc(t.key)}"><input class="note-in" id="jnote-in" maxlength="200" placeholder="Why did it win or lose?" enterkeyhint="done" value="${esc(note)}"></form>`;
+    } else if (note) x += `<div class="mynote">“${esc(note)}”</div>`;
+    return x + `</div>`;
+  }).join("") + (list.length > S.jShow ? `<button class="btn ghost" data-act="jmore">Show more (${list.length - S.jShow} left)</button>` : "") + `</div>`;
+  h += `<button class="btn ghost" data-act="jcsv">Download as spreadsheet (CSV)</button>`;
+  h += `<div class="note" style="text-align:center;margin-top:14px">Built from your Alpaca paper account. Notes are saved on this phone only.</div>`;
+  return h;
+}
+function mostCommon(arr) {
+  const c = {};
+  for (const a of arr) c[a] = (c[a] || 0) + 1;
+  return Object.keys(c).sort((a, b) => c[b] - c[a])[0];
+}
+function journalCsv() {
+  const J = S.journal;
+  if (!J) return;
+  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const rows = [["entry", "exit", "symbol", "setup", "qty", "avg_in", "avg_out", "pnl", "r", "exit_reason", "note"]];
+  for (const t of J.trades) rows.push([t.entry, t.exit, nameOf(t.sym), SETUPS[t.setup], t.bq, t.avgIn.toFixed(4), t.avgOut.toFixed(4),
+    t.pnl.toFixed(2), isFinite(t.r) ? t.r.toFixed(2) : "", t.how, S.notes[t.key] || ""]);
+  const blob = new Blob([rows.map((r) => r.map(q).join(",")).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `stinks-journal-${etDate(Date.now())}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
 function setupView() {
-  return `<div class="top"><div class="brand">🤖 Paper Bot</div></div>
+  return `<div class="top">${brand("SETUP")}</div>
   <form class="setup" id="setup">
     <div class="big">Connect your paper account</div>
     <div class="note">Paste your Alpaca <b>paper</b> API keys. They're saved only on this phone and sent only to Alpaca. This app only works with practice money.</div>
@@ -995,6 +1331,7 @@ function settingsView() {
   const k = keys.key;
   return `<div class="card settings"><div class="sub">Connected with key <b>${esc(k.slice(0, 4))}…${esc(k.slice(-4))}</b></div>
     <button class="btn ghost" data-act="refresh">Refresh now</button>
+    <button class="btn ghost" data-act="boot-toggle">Startup screen: ${loadPref("stinks_boot", "on") === "off" ? "Off" : "On"}</button>
     <button class="btn ghost" data-act="logout">Change keys</button></div>`;
 }
 
@@ -1005,13 +1342,22 @@ document.addEventListener("click", (e) => {
   const act = b.dataset.act;
   if (act === "settings") { S.showSettings = !S.showSettings; render(); }
   if (act === "refresh") { S.showSettings = false; loadAll(); }
+  if (act === "boot-toggle") { savePref("stinks_boot", loadPref("stinks_boot", "on") === "off" ? "on" : "off"); render(); }
+  if (act === "boot-skip") endBoot();
   if (act === "logout") { forgetKeys(); keys = null; closeStreams(); Object.assign(S, { account: null, clock: null, showSettings: false, error: null }); render(); }
   if (act === "day") { S.day = b.dataset.day; render(); loadBars(S.day).then(render); }
   if (act === "tab") {
     S.tab = b.dataset.tab; savePref("paperbot_tab", S.tab); S.showSettings = false;
     window.scrollTo(0, 0); render();
     if (S.tab === "market" && (!S.mkUpdate || Date.now() - S.mkUpdate > 8000)) loadMarket();
+    if (S.tab === "journal" && (!S.jUpdate || Date.now() - S.jUpdate > 60000)) loadJournal();
   }
+  if (act === "jnote") {
+    S.jEdit = S.jEdit === b.dataset.key ? null : b.dataset.key; render();
+    setTimeout(() => { const el = $("#jnote-in"); if (el) el.focus(); }, 60);
+  }
+  if (act === "jmore") { S.jShow += 20; render(); }
+  if (act === "jcsv") journalCsv();
   if (act === "sort") { S.sortBy = b.dataset.sort; savePref("paperbot_sort", S.sortBy); render(); }
   if (act === "timer") { S.timer = Number(b.dataset.sec); savePref("paperbot_timer", String(S.timer)); render(); }
   if (act === "qt") startQuick(b.dataset.und, b.dataset.kind);
@@ -1040,6 +1386,13 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("submit", async (e) => {
+  if (e.target.classList && e.target.classList.contains("jnote-form")) {
+    e.preventDefault();
+    const key = e.target.dataset.key, v = $("#jnote-in").value.trim().slice(0, 200);
+    if (v) S.notes[key] = v; else delete S.notes[key];
+    saveNotes(); S.jEdit = null; render();
+    return;
+  }
   if (e.target.id === "addform") {
     e.preventDefault();
     const input = $("#addsym"), sym = input.value.trim().toUpperCase();
@@ -1059,6 +1412,15 @@ document.addEventListener("submit", async (e) => {
   keys = { key, secret };
   try { await api("/v2/account"); saveKeys(keys); render(); loadAll(); if (S.tab === "market") loadMarket(); }
   catch (x) { keys = null; fail(x instanceof AuthError ? "Alpaca didn't accept those keys. Make sure they're from your paper account." : "Couldn't reach Alpaca. Check your connection and try again."); }
+});
+
+document.addEventListener("focusout", (e) => {
+  if (e.target.id !== "jnote-in") return;
+  const form = e.target.closest(".jnote-form");
+  if (!form || S.jEdit !== form.dataset.key) return;
+  const v = e.target.value.trim().slice(0, 200);
+  if (v) S.notes[form.dataset.key] = v; else delete S.notes[form.dataset.key];
+  saveNotes();
 });
 
 // ---------------- live streams ----------------
@@ -1313,6 +1675,7 @@ let ticks = 0;
 function refresh() {
   if (S.tab === "market") { loadMarket(); if (ticks++ % 3 === 0) loadAll(); }
   else loadAll();
+  if (S.tab === "journal" && (!S.jUpdate || Date.now() - S.jUpdate > 60000)) loadJournal();
 }
 function schedule() {
   const open = S.clock && S.clock.is_open;
@@ -1324,9 +1687,53 @@ document.addEventListener("visibilitychange", () => {
   else { closeStreams(); }
 });
 
+// ---------------- startup screen ----------------
+let bootOver = false;
+function endBoot() {
+  if (bootOver) return;
+  bootOver = true;
+  const el = $("#boot");
+  if (!el) return;
+  el.classList.add("done");
+  setTimeout(() => el.remove(), 400);
+}
+async function runBoot() {
+  const el = $("#boot");
+  if (!el || getComputedStyle(el).display === "none") { if (el) el.remove(); bootOver = true; return; }
+  const log = $("#boot-log"), bar = $(".boot-bar i");
+  const calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, calm ? 0 : ms));
+  const uplink = () => !keys ? ["NO KEYS // SETUP", "warn"] : S.account ? ["LINKED", "ok"] : S.error ? ["OFFLINE", "warn"] : ["CONNECTING", "warn"];
+  const steps = [
+    ["> CORE SYSTEMS ...............", () => ["OK", "ok"]],
+    ["> MODULES ORB/SWEEP/0DTE/SWING", () => ["OK", "ok"]],
+    ["> ACCOUNT MODE ...............", () => ["PAPER", "ok"]],
+    ["> UPLINK ALPACA ..............", uplink],
+  ];
+  let html = "STINKS v1.0 // PAPER TRADING TERMINAL\n";
+  log.innerHTML = html + `<span class="cur"></span>`;
+  for (let i = 0; i < steps.length && !bootOver; i++) {
+    const [label, result] = steps[i];
+    log.innerHTML = html + esc(label) + ` <span class="cur"></span>`;
+    await wait(i === steps.length - 1 ? 650 : 330);
+    if (i === steps.length - 1) for (let t = 0; t < 8 && keys && !S.account && !S.error && !bootOver; t++) await wait(150);
+    const [txt, cls] = result();
+    html += `${esc(label)} <span class="${cls}">${txt}</span>\n`;
+    log.innerHTML = html + `<span class="cur"></span>`;
+    bar.style.width = `${((i + 1) / steps.length) * 100}%`;
+  }
+  if (bootOver) return;
+  html += keys ? "\n> WELCOME BACK, OPERATOR." : "\n> ENTER YOUR PAPER KEYS TO BEGIN.";
+  log.innerHTML = html + `<span class="cur"></span>`;
+  await wait(700);
+  if (calm) await new Promise((r) => setTimeout(r, 900));
+  endBoot();
+}
+
 render();
-if (keys) { loadAll(); if (S.tab === "market") loadMarket(); }
+if (keys) { loadAll(); if (S.tab === "market") loadMarket(); if (S.tab === "journal") loadJournal(); }
 schedule();
+runBoot();
 </script>
 </body>
 </html>
