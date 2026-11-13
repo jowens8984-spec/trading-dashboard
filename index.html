@@ -299,11 +299,12 @@ const OPT_BUDGET_PCT = 25;          // one contract, at most 25% of the account 
 const SWING_BUDGET = 150;           // most in swing holds at once (the bot's and yours)
 const SWING_STOP_PCT = 7;           // protective stop under your swing buys
 const TIMERS = [[5, "5s"], [30, "30s"], [60, "1m"], [300, "5m"], [0, "Off"]];
+const CRYPTO_BUDGET = 100;          // most in crypto at once (bot.py CRYPTO_BUDGET_DOLLARS)
 const MT_STORE = "paperbot_mt";
 const NOTE_STORE = "stinks_notes";
 const JOURNAL_DAYS = 90;            // how far back the journal looks
 const BOT_RISK_PCT = 2;             // what bot.py risks per stock trade (RISK_PER_TRADE_PCT)
-const SETUPS = { orb: "Breakout", ict: "Sweep", "0dte": "0DTE (bot)", swing: "Swing (bot)", myopt: "Your options", myhold: "Your holds" };
+const SETUPS = { orb: "Breakout", ict: "Sweep", "0dte": "0DTE (bot)", swing: "Swing (bot)", crypto: "Crypto", myopt: "Your options", myhold: "Your holds" };
 
 // ---------------- state ----------------
 let keys = loadKeys();
@@ -349,7 +350,11 @@ const px = (x) => (Math.abs(x) >= 1000 ? x.toFixed(0) : x.toFixed(2));
 // Same-day options use OCC symbols like SPY251113C00602000; each contract covers 100 shares
 const isOption = (sym) => sym.length > 15 && /[CP]\d{8}$/.test(sym);
 const optLabel = (sym) => `${sym.slice(0, -15)} ${+sym.slice(-8) / 1000} ${sym.at(-9) === "C" ? "call" : "put"}`;
-const nameOf = (sym) => (isOption(sym) ? optLabel(sym) : sym);
+// Crypto the bot trades (bot.py CRYPTO_SYMBOLS). Positions come back as "BTCUSD", orders as "BTC/USD".
+const CRYPTO_COINS = ["BTC", "ETH", "SOL", "LTC", "AVAX", "LINK"];
+const isCrypto = (sym) => sym.includes("/") || CRYPTO_COINS.some((c) => sym === c + "USD");
+const coinOf = (sym) => sym.replace("/", "").replace(/USD$/, "");
+const nameOf = (sym) => (isOption(sym) ? optLabel(sym) : isCrypto(sym) ? coinOf(sym) : sym);
 const mult = (sym) => (isOption(sym) ? 100 : 1);
 const clockTime = (t) => new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 
@@ -440,7 +445,7 @@ async function loadAll() {
 
 // Which stocks are swing holds, from how they were bought ("swing-" = bot, "app-swing-" = you)
 async function loadSwingBook() {
-  const stocks = S.positions.filter((p) => !isOption(p.symbol));
+  const stocks = S.positions.filter((p) => !isOption(p.symbol) && !isCrypto(p.symbol));
   const sig = stocks.map((p) => p.symbol + ":" + p.qty).sort().join(",");
   if (sig === S.swingSig) return;
   const book = {};
@@ -479,7 +484,7 @@ const boughtInApp = (sym) => S.orders.some((o) => o.symbol === sym && o.side ===
 function symbolsForDay(day) {
   const set = new Set(tripsFor(day).map((t) => t.symbol));
   if (day === etDate(Date.now())) S.positions.forEach((p) => set.add(p.symbol));
-  return [...set].filter((sym) => !isOption(sym)).sort();
+  return [...set].filter((sym) => !isOption(sym) && !isCrypto(sym)).sort();
 }
 
 async function loadBars(day) {
@@ -750,7 +755,8 @@ function botView() {
   // open positions (day trades and same-day options; swing holds get their own list)
   const today = etDate(Date.now());
   const tripsToday = tripsFor(today);
-  const dayPos = S.positions.filter((p) => !isSwing(p.symbol));
+  const dayPos = S.positions.filter((p) => !isSwing(p.symbol) && !isCrypto(p.symbol));
+  const cryptoPos = S.positions.filter((p) => isCrypto(p.symbol));
   const swingPos = S.positions.filter((p) => isSwing(p.symbol));
   h += `<h2>Open positions (${dayPos.length})</h2>`;
   if (!dayPos.length) {
@@ -781,10 +787,18 @@ function botView() {
   }
   for (const p of swingPos) h += swingCard(p);
 
+  // crypto (trades day and night)
+  h += `<h2>Crypto (${cryptoPos.length})</h2>`;
+  h += `<div class="sub" style="margin:-2px 2px 8px">${money(cryptoPos.reduce((a, p) => a + num(p.qty) * num(p.current_price), 0))} of ${money(CRYPTO_BUDGET)} crypto money in use \u00b7 open 24/7</div>`;
+  if (!cryptoPos.length) {
+    h += `<div class="card empty">No crypto held. The bot checks ${CRYPTO_COINS.join(", ")} around the clock for a dip in an uptrend.</div>`;
+  }
+  for (const p of cryptoPos) h += cryptoCard(p);
+
   // trades by day
   h += `<h2>Trades</h2><div class="chips">` +
     S.days.map((d) => `<button class="chip ${d === S.day ? "on" : ""}" data-act="day" data-day="${d}">${esc(dayLabel(d))}</button>`).join("") + `</div>`;
-  const trips = tripsFor(S.day).filter((t) => !t.open || S.day !== today);
+  const trips = tripsFor(S.day).filter((t) => (!t.open || S.day !== today) && !isCrypto(t.symbol)); // crypto trades are in the Journal
   if (!trips.length) {
     h += `<div class="card empty">${S.day === today ? "No finished trades yet today." : "No trades this day."}</div>`;
   } else {
@@ -854,6 +868,18 @@ function optionCard(p) {
     `<div class="levels"><span>Bot sells at <b style="color:var(--green)">+60%</b> (${(entry * 1.6).toFixed(2)})</span>` +
     `<span><b style="color:var(--red)">−40%</b> (${(entry * 0.6).toFixed(2)})</span><span>or <b>20 min</b></span></div>` +
     sellButton(p.symbol, "Sell now") + `</div>`;
+}
+
+// A coin the bot holds
+function cryptoCard(p) {
+  const qty = num(p.qty), entry = num(p.avg_entry_price), now = num(p.current_price);
+  const upl = (now - entry) * qty, uplPct = entry ? ((now - entry) / entry) * 100 : 0;
+  const px = (v) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `<div class="card"><div class="row"><div><span class="sym">${esc(coinOf(p.symbol))}</span><span class="tag swing">CRYPTO</span></div>` +
+    `<div class="big ${cls(upl)}">${signed(upl)}</div></div>` +
+    `<div class="row sub"><div>${money(qty * now)} @ ${px(entry)} \u2192 <b style="color:var(--text)">${px(now)}</b></div><div class="${cls(upl)}">${pct(uplPct)}</div></div>` +
+    `<div class="note" style="margin-top:6px">The bot sells it at its stop or target, if its uptrend breaks, or after 48 hours.</div>` +
+    sellButton(p.symbol, "Sell now (instead of the bot)") + `</div>`;
 }
 
 // A stock held overnight (the bot's or yours)
@@ -1102,6 +1128,7 @@ function brand(sub) { return `<div class="brand">${LOGO}<span class="wm">STINKS<
 // Which setup a trade came from, read off how its buy order was labeled
 function setupOf(order, sym) {
   const t = (order && order.client_order_id) || "";
+  if (t.startsWith("crypto-") || isCrypto(sym)) return "crypto";
   if (t.startsWith("app-opt-")) return "myopt";
   if (t.startsWith("app-swing-")) return "myhold";
   if (t.startsWith("app-")) return isOption(sym) ? "myopt" : "myhold";
@@ -1435,7 +1462,7 @@ function closeStreams() {
 function syncStreams() {
   if (!keys || !S.clock) return;
   if (!tws && document.visibilityState === "visible") openTradeStream();
-  const syms = S.positions.map((p) => p.symbol).filter((x) => !isOption(x)).sort().join(",");
+  const syms = S.positions.map((p) => p.symbol).filter((x) => !isOption(x) && !isCrypto(x)).sort().join(",");
   const wantData = S.clock.is_open && syms && !dLimited && document.visibilityState === "visible";
   if (!wantData) { if (dws) { try { dws.close(); } catch (e) {} dws = null; dSyms = ""; } return; }
   if (!dws) openDataStream();
@@ -1490,7 +1517,7 @@ function openDataStream() {
     let arr; try { arr = JSON.parse(decode(ev.data)); } catch (e) { return; }
     for (const m of [].concat(arr)) {
       if (m.T === "success" && m.msg === "connected") ws.send(JSON.stringify({ action: "auth", key: keys.key, secret: keys.secret }));
-      else if (m.T === "success" && m.msg === "authenticated") { dRetry = 0; S.dataWs = "live"; subscribeData(S.positions.map((p) => p.symbol).filter((x) => !isOption(x)).sort().join(",")); }
+      else if (m.T === "success" && m.msg === "authenticated") { dRetry = 0; S.dataWs = "live"; subscribeData(S.positions.map((p) => p.symbol).filter((x) => !isOption(x) && !isCrypto(x)).sort().join(",")); }
       else if (m.T === "error") { if ([402, 406, 409].includes(m.code)) dLimited = true; try { ws.close(); } catch (e) {} }
       else if (m.T === "t") onLiveTrade(m.S, m.p, m.t);
     }
@@ -1607,7 +1634,10 @@ async function confirmSheet() {
 async function sellPosition(sym, why) {
   S.armSell = null; render();
   try {
-    const open = await api(`/v2/orders?status=open&symbols=${encodeURIComponent(sym)}`);
+    // a coin's orders are listed as "BTC/USD", so look through all open orders for it
+    const open = isCrypto(sym)
+      ? (await api(`/v2/orders?status=open&limit=500`)).filter((o) => o.symbol.replace("/", "") === sym.replace("/", ""))
+      : await api(`/v2/orders?status=open&symbols=${encodeURIComponent(sym)}`);
     for (const o of open || []) await apiSend("DELETE", `/v2/orders/${o.id}`).catch(() => {});
     await apiSend("DELETE", `/v2/positions/${encodeURIComponent(sym)}`);
     toast(why ? `${why}: selling ${nameOf(sym)}` : `Selling ${nameOf(sym)}`);
