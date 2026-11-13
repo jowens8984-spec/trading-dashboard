@@ -290,8 +290,8 @@ const DATA_WS = "wss://stream.data.alpaca.markets/v2/iex";
 const KEY_STORE = "paperbot_keys";
 const MY_STORE = "paperbot_mylist";
 const INDEXES = [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["DIA", "Dow"], ["IWM", "Russell 2000"]];
-// Same 50 stocks the bot scans (bot.py WATCHLIST)
-const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "AFRM", "T", "VZ", "CMCSA", "WBD", "NKE", "DKNG", "PFE", "INTC", "CSCO", "MRVL", "SMCI", "UBER", "SNAP", "JD", "SOUN", "IONQ", "RGTI", "F", "GM", "RIVN", "LCID", "NIO", "AAL", "DAL", "UAL", "CCL", "RKLB", "ACHR", "JOBY", "OXY", "DVN", "FCX", "NEM", "MARA", "RIOT", "CLSK", "IREN", "XLF", "SLV", "GDX", "IBIT"];
+// Same stocks the bot scans (bot.py WATCHLIST)
+const BOT_WATCHLIST = ["BAC", "WFC", "C", "KEY", "SOFI", "NU", "HOOD", "PYPL", "AFRM", "T", "VZ", "CMCSA", "WBD", "NKE", "DKNG", "PFE", "INTC", "CSCO", "MRVL", "SMCI", "UBER", "SNAP", "JD", "SOUN", "IONQ", "RGTI", "F", "GM", "RIVN", "LCID", "NIO", "AAL", "DAL", "UAL", "CCL", "RKLB", "ACHR", "JOBY", "OXY", "DVN", "FCX", "NEM", "MARA", "RIOT", "CLSK", "IREN", "XLF", "SLV", "GDX", "IBIT", "KO", "DIS", "BMY", "MRK", "GILD", "KHC", "WMT", "TGT", "SBUX", "CMG", "CVS", "USB", "TFC", "SCHW", "ALLY", "LYFT", "PINS", "RBLX", "ROKU", "GME", "AMC", "HPE", "HPQ", "ON", "PLTR", "AMD", "LUV", "NCLH", "CLF", "AA", "VALE", "PBR", "KMI", "HAL", "SLB", "ET", "RIG", "APA", "KGC", "XLE", "EEM", "FXI", "KWEB", "TLT", "ARKK"];
 // Same rules as bot.py, so the app and the bot agree
 const OPT_UNDERLYINGS = ["SPY", "QQQ"];
 const OPT_CHASE_PCT = 0.3;          // bot won't buy once SPY/QQQ is this far past its range
@@ -754,7 +754,7 @@ function botView() {
   const swingPos = S.positions.filter((p) => isSwing(p.symbol));
   h += `<h2>Open positions (${dayPos.length})</h2>`;
   if (!dayPos.length) {
-    h += `<div class="card empty">No open day trades. The bot looks for trades from 9:00 to 11:30 AM.</div>`;
+    h += `<div class="card empty">No open day trades. The bot looks for trades from 8:45 AM to 2:00 PM.</div>`;
   }
   for (const p of dayPos) {
     const t = tripsToday.find((x) => x.symbol === p.symbol) || {};
@@ -1002,7 +1002,7 @@ function quickBlock() {
 function optionsWatch(day) {
   const m = etMinutes(), open = S.clock && S.clock.is_open;
   let h = `<h2>Options watch</h2><div class="card">`;
-  h += `<div class="sub" style="margin-bottom:10px">The bot buys a same-day <b class="pos">call</b> when SPY or QQQ breaks above its 8:30–8:45 range (or a swept low holds) and a <b class="neg">put</b> when it breaks below (or a swept high fails)${m >= 12 * 60 && open ? " (its window closed at 11:00 CT)" : ", until 11:00 CT"}.</div>`;
+  h += `<div class="sub" style="margin-bottom:10px">The bot buys a same-day <b class="pos">call</b> when SPY or QQQ breaks above its 8:30–8:45 range (or a swept low holds) and a <b class="neg">put</b> when it breaks below (or a swept high fails)${m >= 14 * 60 + 30 && open ? " (its window closed at 1:30 PM CT)" : ", until 1:30 PM CT"}.</div>`;
   const block = quickBlock();
   for (const und of OPT_UNDERLYINGS) {
     const q = quote(und), r = rangeOf(und, day);
