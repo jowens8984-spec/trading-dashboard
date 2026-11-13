@@ -754,7 +754,7 @@ function botView() {
   const swingPos = S.positions.filter((p) => isSwing(p.symbol));
   h += `<h2>Open positions (${dayPos.length})</h2>`;
   if (!dayPos.length) {
-    h += `<div class="card empty">No open day trades. The bot looks for trades from 8:45 AM to 2:00 PM.</div>`;
+    h += `<div class="card empty">No open day trades. The bot looks for trades from 8:45 AM to 2:40 PM.</div>`;
   }
   for (const p of dayPos) {
     const t = tripsToday.find((x) => x.symbol === p.symbol) || {};
@@ -993,7 +993,7 @@ function quickBlock() {
   if (!S.clock.is_open) return "Market is closed";
   const m = etMinutes();
   if (m < 9 * 60 + 31) return "Wait for the open";
-  if (m >= 15 * 60 + 15) return "No new same-day options after 2:15 PM CT";
+  if (m >= 15 * 60) return "No new same-day options after 2:00 PM CT";
   if (S.mt) return "Finish your current option first";
   if (S.positions.some((p) => isOption(p.symbol))) return "Already holding an option (sell it first)";
   return "";
