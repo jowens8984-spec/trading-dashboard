@@ -1,12 +1,12 @@
 {
-  "name": "Paper Bot",
-  "short_name": "Paper Bot",
-  "description": "Live view of the paper-trading bot",
+  "name": "STINKS",
+  "short_name": "STINKS",
+  "description": "STINKS paper trading terminal",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0f14",
-  "theme_color": "#0b0f14",
+  "background_color": "#060708",
+  "theme_color": "#060708",
   "icons": [
     { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
